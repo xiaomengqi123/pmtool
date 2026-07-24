@@ -19,7 +19,8 @@ spring:
   servlet:
     multipart:
       max-file-size: 2MB
-      max-request-size: 2MB
+      # 允许 multipart 边界开销；实际文件大小仍由 AttachmentService 严格限制为 2 MB。
+      max-request-size: 3MB
 pmtool:
   jwt:
     secret: ${JWT_SECRET:pmtool-development-secret-change-before-production-1234}
@@ -37,4 +38,3 @@ management:
     web:
       exposure:
         include: health,info
-
