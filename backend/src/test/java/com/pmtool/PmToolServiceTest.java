@@ -38,6 +38,17 @@ class PmToolServiceTest {
     }
 
     @Test
+    void memberCannotReadGlobalUserDirectory() {
+        PmToolService service = service();
+        authenticate(2L, "MEMBER");
+
+        assertThatThrownBy(service::allUsers)
+            .isInstanceOf(BusinessException.class)
+            .extracting(error -> ((BusinessException) error).status)
+            .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void administratorCanSoftDeleteAnotherUserButNotThemselves() {
         UserRepository users = mock(UserRepository.class);
         UserAccount member = new UserAccount("member", "hash", "成员", "MEMBER");

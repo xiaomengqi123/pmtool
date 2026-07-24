@@ -43,7 +43,7 @@ async function load() {
   ] = await Promise.all([
     api.project(id),
     api.projectTasks(id),
-    api.users(),
+    auth.isManager ? api.users() : Promise.resolve([]),
     api.milestones(id),
     api.gantt(id),
     api.attachments("project", id),

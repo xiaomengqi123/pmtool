@@ -14,7 +14,7 @@ const route = useRoute(),
 async function load() {
   [members.value, users.value] = await Promise.all([
     api.projectMembers(projectId.value),
-    api.users(),
+    auth.isManager ? api.users() : Promise.resolve([]),
   ]);
 }
 onMounted(load);

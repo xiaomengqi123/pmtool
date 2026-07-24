@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 前端单元测试 | 通过 | `npm test`：Vitest 5/5 通过，覆盖工作台、项目、任务与工时角色入口。 |
 | 前端类型检查与构建 | 通过 | `npm run build`：`vue-tsc -b` 与 Vite 构建通过。 |
-| 后端单元/上下文/安全测试 | 通过 | `mvn test`：16/16 通过，含用户角色与软删除、客户资料与任务/工时项目范围、状态筛选分页、登录/JWT 与 OpenAPI 契约回归。 |
+| 后端单元/上下文/安全测试 | 通过 | `mvn test`：17/17 通过，含用户目录授权与软删除、客户资料与任务/工时项目范围、状态筛选分页、登录/JWT 与 OpenAPI 契约回归。 |
 | 后端可发布包 | 通过 | `mvn package` 已生成 `backend/target/pmtool-1.0.0.jar`。 |
 
 ## 功能核验
@@ -22,6 +22,7 @@
 | TC-PERM-01 | 管理员全局、项目经理项目范围、成员仅本人任务进度 | 通过 | `PmToolService.saveTask`、`updateTaskStatus` 与项目页面权限入口。 |
 | TC-PERM-02 | 成员在全局任务页仅能保存本人任务状态和进度 | 通过 | `TaskView` 仅对负责人显示保存入口，后端仍进行最终项目范围与负责人校验。 |
 | TC-PERM-03 | 客户、联系人与跟进记录仅管理角色可读取 | 通过 | 客户相关读取接口执行 `requireManager`，前端菜单与后端授权一致。 |
+| TC-PERM-04 | 成员不能读取全量用户清单 | 通过 | `/users/all` 限制为管理角色，成员端不再请求该接口。 |
 | TC-TASK-01 | 任务乐观锁冲突返回 409 | 通过 | `PmToolService.saveTask`、`updateTaskStatus` 的版本校验。 |
 | TC-ENUM-01 | 项目、任务、里程碑状态与任务优先级均限制为约定枚举 | 通过 | 服务端枚举白名单校验；前端里程碑完成状态统一为 `completed`。 |
 | TC-WORKLOG-01 | 工时提交、审批/驳回、重提和审批后修改重置待审 | 通过 | `PmToolService.saveWorkLog` 与工时页面。 |

@@ -24,7 +24,7 @@ async function load() {
       keyword: keyword.value,
       status: statusFilter.value,
     }),
-    api.users(),
+    auth.isManager ? api.users() : Promise.resolve([]),
   ]);
   rows.value = taskPage.items;
   users.value = allUsers;

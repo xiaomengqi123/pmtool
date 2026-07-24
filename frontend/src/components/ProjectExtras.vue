@@ -19,7 +19,7 @@ async function load() {
   [documents.value, risks.value, users.value] = await Promise.all([
     api.documents(props.projectId),
     api.risks(props.projectId),
-    api.users(),
+    props.isManager ? api.users() : Promise.resolve([]),
   ]);
 }
 onMounted(load);
