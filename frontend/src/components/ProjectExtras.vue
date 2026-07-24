@@ -5,7 +5,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 const props = defineProps<{ projectId: number; isManager: boolean }>(),
   documents = ref<any[]>([]),
   risks = ref<any[]>([]),
-  users = ref<any[]>([]),
+  members = ref<any[]>([]),
   documentDialog = ref(false),
   riskDialog = ref(false),
   documentForm = reactive<any>({ title: "", content: "" }),
@@ -16,10 +16,10 @@ const props = defineProps<{ projectId: number; isManager: boolean }>(),
     ownerId: null,
   });
 async function load() {
-  [documents.value, risks.value, users.value] = await Promise.all([
+  [documents.value, risks.value, members.value] = await Promise.all([
     api.documents(props.projectId),
     api.risks(props.projectId),
-    props.isManager ? api.users() : Promise.resolve([]),
+    api.projectMembers(props.projectId),
   ]);
 }
 onMounted(load);
@@ -130,7 +130,7 @@ async function removeRisk(item: any) {
         width="120"
       /><el-table-column prop="ownerId" label="负责人" width="100"
         ><template #default="{ row }">{{
-          users.find((u) => u.id === row.ownerId)?.displayName || "-"
+          members.find((member) => member.userId === row.ownerId)?.displayName || "-"
         }}</template></el-table-column
       ><el-table-column v-if="isManager" label="操作" width="130"
         ><template #default="{ row }"
@@ -178,10 +178,10 @@ async function removeRisk(item: any) {
       ><el-form-item label="负责人"
         ><el-select v-model="riskForm.ownerId" clearable
           ><el-option
-            v-for="u in users"
-            :key="u.id"
-            :label="u.displayName"
-            :value="u.id" /></el-select></el-form-item></el-form
+            v-for="member in members"
+            :key="member.userId"
+            :label="member.displayName"
+            :value="member.userId" /></el-select></el-form-item></el-form
     ><template #footer
       ><el-button @click="riskDialog = false">取消</el-button
       ><el-button type="primary" @click="saveRisk">保存</el-button></template

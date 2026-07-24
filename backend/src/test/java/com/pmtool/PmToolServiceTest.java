@@ -122,6 +122,24 @@ class PmToolServiceTest {
     }
 
     @Test
+    void projectScopedOwnerMustBeProjectMemberOrManager() {
+        UserRepository users = mock(UserRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        PmToolService service = new PmToolService(users, mock(CustomerRepository.class), mock(ProjectRepository.class), members, mock(MilestoneRepository.class), mock(TaskRepository.class), mock(TaskDependencyRepository.class), mock(WorkLogRepository.class), mock(NotificationRepository.class), mock(OperationLogRepository.class), mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        UserAccount owner = new UserAccount("outside", "hash", "项目外成员", "MEMBER");
+        owner.id = 2L;
+        when(users.findById(2L)).thenReturn(Optional.of(owner));
+        when(members.existsByIdProjectIdAndIdUserId(10L, 2L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.ensureProjectParticipant(project, 2L, "风险负责人必须是项目成员"))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("风险负责人必须是项目成员");
+    }
+
+    @Test
     void projectManagerSoftDeletesTaskAndRecalculatesProjectProgress() {
         UserRepository users = mock(UserRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);
