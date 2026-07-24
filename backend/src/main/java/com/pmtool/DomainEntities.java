@@ -98,6 +98,20 @@ class TaskItem extends BaseEntity {
     protected TaskItem() {}
 }
 
+@Entity @Table(name = "task_dependencies")
+class TaskDependency {
+    @EmbeddedId TaskDependencyId id;
+    protected TaskDependency() {}
+    TaskDependency(Long taskId,Long dependsOnTaskId){this.id=new TaskDependencyId(taskId,dependsOnTaskId);}
+}
+@Embeddable
+class TaskDependencyId implements java.io.Serializable {
+    @Column(name="task_id") Long taskId; @Column(name="depends_on_task_id") Long dependsOnTaskId;
+    protected TaskDependencyId() {} TaskDependencyId(Long taskId,Long dependsOnTaskId){this.taskId=taskId;this.dependsOnTaskId=dependsOnTaskId;}
+    @Override public boolean equals(Object o){return o instanceof TaskDependencyId x&&java.util.Objects.equals(taskId,x.taskId)&&java.util.Objects.equals(dependsOnTaskId,x.dependsOnTaskId);}
+    @Override public int hashCode(){return java.util.Objects.hash(taskId,dependsOnTaskId);}
+}
+
 @Entity @Table(name = "work_logs")
 class WorkLog extends BaseEntity {
     @Column(name="task_id", nullable=false) Long taskId; @Column(name="user_id", nullable=false) Long userId;

@@ -11,6 +11,7 @@ record LoginBody(@NotBlank String username, @NotBlank String password) {}
 record PasswordBody(@NotBlank String oldPassword, @NotBlank String newPassword) {}
 record StatusBody(@NotBlank String status, Long version) {}
 record ReorderBody(List<Long> taskIds) {}
+record DependencyBody(Long dependsOnTaskId) {}
 record MemberBody(Long userId, String roleCode) {}
 
 @RestController
@@ -43,7 +44,12 @@ public class PmToolController {
     @PostMapping("/tasks") ApiResponse<?> addTask(@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,null)));}
     @PutMapping("/tasks/{id}") ApiResponse<?> updateTask(@PathVariable Long id,@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,id)));}
     @PatchMapping("/tasks/{id}/status") ApiResponse<Void> taskStatus(@PathVariable Long id,@RequestBody StatusBody body){service.updateTaskStatus(id,body.status(),body.version());return ApiResponse.ok(null);}
+    @PostMapping("/tasks/batch-status") ApiResponse<Void> batchStatus(@RequestBody BatchTaskStatusInput body){service.batchUpdateStatus(body);return ApiResponse.ok(null);}
+    @GetMapping("/tasks/{id}/dependencies") ApiResponse<?> dependencies(@PathVariable Long id){return ApiResponse.ok(service.dependenciesOf(id));}
+    @PostMapping("/tasks/{id}/dependencies") ApiResponse<Void> addDependency(@PathVariable Long id,@RequestBody DependencyBody body){if(body.dependsOnTaskId()==null)throw service.fail(40001,HttpStatus.BAD_REQUEST,"依赖任务不能为空");service.addDependency(id,body.dependsOnTaskId());return ApiResponse.ok(null);}
+    @DeleteMapping("/tasks/{id}/dependencies/{dependsOnTaskId}") ApiResponse<Void> removeDependency(@PathVariable Long id,@PathVariable Long dependsOnTaskId){service.removeDependency(id,dependsOnTaskId);return ApiResponse.ok(null);}
     @PostMapping("/tasks/project/{projectId}/reorder") ApiResponse<Void> reorder(@PathVariable Long projectId,@RequestBody ReorderBody body){service.reorder(projectId,body.taskIds());return ApiResponse.ok(null);}
+    @GetMapping("/projects/{id}/gantt") ApiResponse<?> gantt(@PathVariable Long id){return ApiResponse.ok(service.gantt(id));}
 
     @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleWorkLogs().stream().map(this::workLogView).toList(),page,pageSize));}
     @PostMapping("/work-logs") ApiResponse<?> addWorkLog(@RequestBody WorkLogInput body){return ApiResponse.ok(workLogView(service.saveWorkLog(body,null)));}

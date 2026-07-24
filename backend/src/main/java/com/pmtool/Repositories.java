@@ -15,6 +15,7 @@ interface ProjectRepository extends JpaRepository<Project, Long> { Page<Project>
 interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> { boolean existsByIdProjectIdAndIdUserId(Long projectId, Long userId); List<ProjectMember> findByIdProjectId(Long projectId); }
 interface MilestoneRepository extends JpaRepository<Milestone, Long> { List<Milestone> findByProjectIdAndDeletedFalseOrderByDueDateAsc(Long projectId); }
 interface TaskRepository extends JpaRepository<TaskItem, Long> { Page<TaskItem> findByDeletedFalse(Pageable pageable); List<TaskItem> findByProjectIdAndDeletedFalseOrderBySortOrderAsc(Long projectId); List<TaskItem> findByProjectIdAndDeletedFalse(Long projectId); }
+interface TaskDependencyRepository extends JpaRepository<TaskDependency, TaskDependencyId> { List<TaskDependency> findByIdTaskId(Long taskId); }
 interface WorkLogRepository extends JpaRepository<WorkLog, Long> { Page<WorkLog> findByDeletedFalse(Pageable pageable); }
 interface NotificationRepository extends JpaRepository<NotificationItem, Long> { List<NotificationItem> findByUserIdOrderByCreatedAtDesc(Long userId); long countByUserIdAndReadFalse(Long userId); }
 interface AttachmentRepository extends JpaRepository<Attachment, Long> { List<Attachment> findByTargetTypeAndTargetIdAndDeletedFalse(String targetType, Long targetId); }
