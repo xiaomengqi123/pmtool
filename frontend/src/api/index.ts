@@ -1,26 +1,158 @@
-import http from './http'
-import type { AxiosResponse } from 'axios'
-import type { Customer, Department, GanttTask, Milestone, PageResult, Project, Role, Task, User } from '../types'
-const unwrap = <T>(request: Promise<AxiosResponse<{ data: T }>>) => request.then(response => response.data.data)
+import http from "./http";
+import type { AxiosResponse } from "axios";
+import type {
+  Customer,
+  Department,
+  GanttTask,
+  Milestone,
+  PageResult,
+  Project,
+  Role,
+  Task,
+  User,
+} from "../types";
+const unwrap = <T>(request: Promise<AxiosResponse<{ data: T }>>) =>
+  request.then((response) => response.data.data);
 export const api = {
-  login: (username:string,password:string) => unwrap<{token:string;user:User}>(http.post('/auth/login',{username,password})),
-  me: () => unwrap<User>(http.get('/auth/info')),
-  dashboard: () => unwrap<Record<string, unknown>>(http.get('/dashboard')),
-  users: () => unwrap<User[]>(http.get('/users/all')), createUser:(data:Partial<User>&{password:string})=>unwrap(http.post('/users',data)), updateUser:(id:number,data:Partial<User>)=>unwrap(http.put(`/users/${id}`,data)), resetUserPassword:(id:number,password:string)=>unwrap(http.post(`/users/${id}/reset-password`,{password})),
-  departments:()=>unwrap<Department[]>(http.get('/departments')), saveDepartment:(data:Partial<Department>)=>data.id?unwrap(http.put(`/departments/${data.id}`,data)):unwrap(http.post('/departments',data)), deleteDepartment:(id:number)=>unwrap(http.delete(`/departments/${id}`)), roles:()=>unwrap<Role[]>(http.get('/roles')),
-  operationLogs:(page=1,pageSize=20)=>unwrap<PageResult<any>>(http.get('/operation-logs',{params:{page,pageSize}})),
-  customers:(page=1,pageSize=20)=>unwrap<PageResult<Customer>>(http.get('/customers',{params:{page,pageSize}})), saveCustomer:(data:Partial<Customer>)=>data.id?unwrap(http.put(`/customers/${data.id}`,data)):unwrap(http.post('/customers',data)),
-  contacts:(customerId:number)=>unwrap<any[]>(http.get(`/customers/${customerId}/contacts`)), saveContact:(customerId:number,data:any)=>data.id?unwrap(http.put(`/customers/${customerId}/contacts/${data.id}`,data)):unwrap(http.post(`/customers/${customerId}/contacts`,data)), deleteContact:(customerId:number,id:number)=>unwrap(http.delete(`/customers/${customerId}/contacts/${id}`)), followUps:(customerId:number)=>unwrap<any[]>(http.get(`/customers/${customerId}/follow-ups`)), saveFollowUp:(customerId:number,data:any)=>unwrap(http.post(`/customers/${customerId}/follow-ups`,data)),
-  projects:(page=1,pageSize=20)=>unwrap<PageResult<Project>>(http.get('/projects',{params:{page,pageSize}})), project:(id:number)=>unwrap<Project>(http.get(`/projects/${id}`)), saveProject:(data:Partial<Project>)=>data.id?unwrap(http.put(`/projects/${data.id}`,data)):unwrap(http.post('/projects',data)),
-  milestones:(projectId:number)=>unwrap<Milestone[]>(http.get(`/projects/${projectId}/milestones`)), saveMilestone:(projectId:number,data:Partial<Milestone>)=>data.id?unwrap(http.put(`/projects/${projectId}/milestones/${data.id}`,data)):unwrap(http.post(`/projects/${projectId}/milestones`,data)),
-  gantt:(projectId:number)=>unwrap<GanttTask[]>(http.get(`/projects/${projectId}/gantt`)),
-  documents:(projectId:number)=>unwrap<any[]>(http.get(`/projects/${projectId}/documents`)), saveDocument:(projectId:number,data:any)=>data.id?unwrap(http.put(`/projects/${projectId}/documents/${data.id}`,data)):unwrap(http.post(`/projects/${projectId}/documents`,data)), deleteDocument:(projectId:number,id:number)=>unwrap(http.delete(`/projects/${projectId}/documents/${id}`)), risks:(projectId:number)=>unwrap<any[]>(http.get(`/projects/${projectId}/risks`)), saveRisk:(projectId:number,data:any)=>data.id?unwrap(http.put(`/projects/${projectId}/risks/${data.id}`,data)):unwrap(http.post(`/projects/${projectId}/risks`,data)), deleteRisk:(projectId:number,id:number)=>unwrap(http.delete(`/projects/${projectId}/risks/${id}`)),
-  projectMembers:(projectId:number)=>unwrap<any[]>(http.get(`/projects/${projectId}/members`)), addProjectMember:(projectId:number,userId:number,roleCode='MEMBER')=>unwrap(http.post(`/projects/${projectId}/members`,{userId,roleCode})), removeProjectMember:(projectId:number,userId:number)=>unwrap(http.delete(`/projects/${projectId}/members/${userId}`)),
-  dependencies:(taskId:number)=>unwrap<number[]>(http.get(`/tasks/${taskId}/dependencies`)), addDependency:(taskId:number,dependsOnTaskId:number)=>unwrap(http.post(`/tasks/${taskId}/dependencies`,{dependsOnTaskId})), removeDependency:(taskId:number,dependsOnTaskId:number)=>unwrap(http.delete(`/tasks/${taskId}/dependencies/${dependsOnTaskId}`)),
-  batchTaskStatus:(taskIds:number[],status:string)=>unwrap(http.post('/tasks/batch-status',{taskIds,status})), reorderTasks:(projectId:number,taskIds:number[])=>unwrap(http.post(`/tasks/project/${projectId}/reorder`,{taskIds})),
-  attachments:(targetType:string,targetId:number)=>unwrap<any[]>(http.get(`/attachments/${targetType}/${targetId}`)), uploadAttachment:(targetType:string,targetId:number,file:File)=>{const data=new FormData();data.append('file',file);return unwrap(http.post(`/attachments/${targetType}/${targetId}`,data,{headers:{'Content-Type':'multipart/form-data'}}))}, deleteAttachment:(id:number)=>unwrap(http.delete(`/attachments/${id}`)),
-  downloadAttachment:(id:number)=>http.get(`/attachments/${id}/download`,{responseType:'blob'}).then(response=>response.data as Blob),
-  projectTasks:(id:number)=>unwrap<Task[]>(http.get(`/projects/${id}/tasks`)), tasks:(page=1,pageSize=20)=>unwrap<PageResult<Task>>(http.get('/tasks',{params:{page,pageSize}})), saveTask:(data:Partial<Task>)=>data.id?unwrap(http.put(`/tasks/${data.id}`,data)):unwrap(http.post('/tasks',data)), status:(id:number,status:string,version:number)=>unwrap(http.patch(`/tasks/${id}/status`,{status,version})),
-  workLogs:(page=1,pageSize=20)=>unwrap<PageResult<any>>(http.get('/work-logs',{params:{page,pageSize}})), saveWorkLog:(data:any)=>data.id?unwrap(http.put(`/work-logs/${data.id}`,data)):unwrap(http.post('/work-logs',data)), review:(id:number,approved:boolean,comment?:string)=>unwrap(http.post(`/work-logs/${id}/${approved?'approve':'reject'}`,comment?{comment}:{})),
-  notifications:()=>unwrap<any[]>(http.get('/notifications')), unread:()=>unwrap<{count:number}>(http.get('/notifications/unread-count')), read:(id:number)=>unwrap(http.post(`/notifications/${id}/read`)), readAll:()=>unwrap(http.post('/notifications/read-all'))
-}
+  login: (username: string, password: string) =>
+    unwrap<{ token: string; user: User }>(
+      http.post("/auth/login", { username, password }),
+    ),
+  me: () => unwrap<User>(http.get("/auth/info")),
+  dashboard: () => unwrap<Record<string, unknown>>(http.get("/dashboard")),
+  users: () => unwrap<User[]>(http.get("/users/all")),
+  createUser: (data: Partial<User> & { password: string }) =>
+    unwrap(http.post("/users", data)),
+  updateUser: (id: number, data: Partial<User>) =>
+    unwrap(http.put(`/users/${id}`, data)),
+  resetUserPassword: (id: number, password: string) =>
+    unwrap(http.post(`/users/${id}/reset-password`, { password })),
+  departments: () => unwrap<Department[]>(http.get("/departments")),
+  saveDepartment: (data: Partial<Department>) =>
+    data.id
+      ? unwrap(http.put(`/departments/${data.id}`, data))
+      : unwrap(http.post("/departments", data)),
+  deleteDepartment: (id: number) => unwrap(http.delete(`/departments/${id}`)),
+  roles: () => unwrap<Role[]>(http.get("/roles")),
+  operationLogs: (page = 1, pageSize = 20) =>
+    unwrap<PageResult<any>>(
+      http.get("/operation-logs", { params: { page, pageSize } }),
+    ),
+  customers: (page = 1, pageSize = 20) =>
+    unwrap<PageResult<Customer>>(
+      http.get("/customers", { params: { page, pageSize } }),
+    ),
+  saveCustomer: (data: Partial<Customer>) =>
+    data.id
+      ? unwrap(http.put(`/customers/${data.id}`, data))
+      : unwrap(http.post("/customers", data)),
+  contacts: (customerId: number) =>
+    unwrap<any[]>(http.get(`/customers/${customerId}/contacts`)),
+  saveContact: (customerId: number, data: any) =>
+    data.id
+      ? unwrap(http.put(`/customers/${customerId}/contacts/${data.id}`, data))
+      : unwrap(http.post(`/customers/${customerId}/contacts`, data)),
+  deleteContact: (customerId: number, id: number) =>
+    unwrap(http.delete(`/customers/${customerId}/contacts/${id}`)),
+  followUps: (customerId: number) =>
+    unwrap<any[]>(http.get(`/customers/${customerId}/follow-ups`)),
+  saveFollowUp: (customerId: number, data: any) =>
+    unwrap(http.post(`/customers/${customerId}/follow-ups`, data)),
+  projects: (page = 1, pageSize = 20) =>
+    unwrap<PageResult<Project>>(
+      http.get("/projects", { params: { page, pageSize } }),
+    ),
+  project: (id: number) => unwrap<Project>(http.get(`/projects/${id}`)),
+  saveProject: (data: Partial<Project>) =>
+    data.id
+      ? unwrap(http.put(`/projects/${data.id}`, data))
+      : unwrap(http.post("/projects", data)),
+  milestones: (projectId: number) =>
+    unwrap<Milestone[]>(http.get(`/projects/${projectId}/milestones`)),
+  saveMilestone: (projectId: number, data: Partial<Milestone>) =>
+    data.id
+      ? unwrap(http.put(`/projects/${projectId}/milestones/${data.id}`, data))
+      : unwrap(http.post(`/projects/${projectId}/milestones`, data)),
+  gantt: (projectId: number) =>
+    unwrap<GanttTask[]>(http.get(`/projects/${projectId}/gantt`)),
+  documents: (projectId: number) =>
+    unwrap<any[]>(http.get(`/projects/${projectId}/documents`)),
+  saveDocument: (projectId: number, data: any) =>
+    data.id
+      ? unwrap(http.put(`/projects/${projectId}/documents/${data.id}`, data))
+      : unwrap(http.post(`/projects/${projectId}/documents`, data)),
+  deleteDocument: (projectId: number, id: number) =>
+    unwrap(http.delete(`/projects/${projectId}/documents/${id}`)),
+  risks: (projectId: number) =>
+    unwrap<any[]>(http.get(`/projects/${projectId}/risks`)),
+  saveRisk: (projectId: number, data: any) =>
+    data.id
+      ? unwrap(http.put(`/projects/${projectId}/risks/${data.id}`, data))
+      : unwrap(http.post(`/projects/${projectId}/risks`, data)),
+  deleteRisk: (projectId: number, id: number) =>
+    unwrap(http.delete(`/projects/${projectId}/risks/${id}`)),
+  projectMembers: (projectId: number) =>
+    unwrap<any[]>(http.get(`/projects/${projectId}/members`)),
+  addProjectMember: (projectId: number, userId: number, roleCode = "MEMBER") =>
+    unwrap(http.post(`/projects/${projectId}/members`, { userId, roleCode })),
+  removeProjectMember: (projectId: number, userId: number) =>
+    unwrap(http.delete(`/projects/${projectId}/members/${userId}`)),
+  dependencies: (taskId: number) =>
+    unwrap<number[]>(http.get(`/tasks/${taskId}/dependencies`)),
+  addDependency: (taskId: number, dependsOnTaskId: number) =>
+    unwrap(http.post(`/tasks/${taskId}/dependencies`, { dependsOnTaskId })),
+  removeDependency: (taskId: number, dependsOnTaskId: number) =>
+    unwrap(http.delete(`/tasks/${taskId}/dependencies/${dependsOnTaskId}`)),
+  batchTaskStatus: (taskIds: number[], status: string) =>
+    unwrap(http.post("/tasks/batch-status", { taskIds, status })),
+  reorderTasks: (projectId: number, taskIds: number[]) =>
+    unwrap(http.post(`/tasks/project/${projectId}/reorder`, { taskIds })),
+  attachments: (targetType: string, targetId: number) =>
+    unwrap<any[]>(http.get(`/attachments/${targetType}/${targetId}`)),
+  uploadAttachment: (targetType: string, targetId: number, file: File) => {
+    const data = new FormData();
+    data.append("file", file);
+    return unwrap(
+      http.post(`/attachments/${targetType}/${targetId}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    );
+  },
+  deleteAttachment: (id: number) => unwrap(http.delete(`/attachments/${id}`)),
+  downloadAttachment: (id: number) =>
+    http
+      .get(`/attachments/${id}/download`, { responseType: "blob" })
+      .then((response) => response.data as Blob),
+  projectTasks: (id: number) =>
+    unwrap<Task[]>(http.get(`/projects/${id}/tasks`)),
+  tasks: (page = 1, pageSize = 20) =>
+    unwrap<PageResult<Task>>(
+      http.get("/tasks", { params: { page, pageSize } }),
+    ),
+  saveTask: (data: Partial<Task>) =>
+    data.id
+      ? unwrap(http.put(`/tasks/${data.id}`, data))
+      : unwrap(http.post("/tasks", data)),
+  status: (id: number, status: string, version: number) =>
+    unwrap(http.patch(`/tasks/${id}/status`, { status, version })),
+  workLogs: (page = 1, pageSize = 20) =>
+    unwrap<PageResult<any>>(
+      http.get("/work-logs", { params: { page, pageSize } }),
+    ),
+  saveWorkLog: (data: any) =>
+    data.id
+      ? unwrap(http.put(`/work-logs/${data.id}`, data))
+      : unwrap(http.post("/work-logs", data)),
+  review: (id: number, approved: boolean, comment?: string) =>
+    unwrap(
+      http.post(
+        `/work-logs/${id}/${approved ? "approve" : "reject"}`,
+        comment ? { comment } : {},
+      ),
+    ),
+  notifications: () => unwrap<any[]>(http.get("/notifications")),
+  unread: () =>
+    unwrap<{ count: number }>(http.get("/notifications/unread-count")),
+  read: (id: number) => unwrap(http.post(`/notifications/${id}/read`)),
+  readAll: () => unwrap(http.post("/notifications/read-all")),
+};

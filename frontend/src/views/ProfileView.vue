@@ -1,3 +1,45 @@
-<script setup lang="ts">import { reactive } from 'vue';import { useAuthStore } from '../stores/auth';import http from '../api/http';import { ElMessage } from 'element-plus';const auth=useAuthStore(),form=reactive({oldPassword:'',newPassword:''});async function save(){await http.post('/auth/change-password',form);form.oldPassword='';form.newPassword='';ElMessage.success('密码已修改')}</script>
-<template><div class="page"><div class="page-header"><h1 class="page-title">个人中心</h1></div><section class="card" style="max-width:600px"><el-descriptions :column="1" border><el-descriptions-item label="账号">{{auth.user?.username}}</el-descriptions-item><el-descriptions-item label="姓名">{{auth.user?.displayName}}</el-descriptions-item><el-descriptions-item label="角色">{{auth.user?.roleCode}}</el-descriptions-item></el-descriptions><el-divider>修改密码</el-divider><el-form label-width="90"><el-form-item label="旧密码"><el-input v-model="form.oldPassword" type="password" show-password/></el-form-item><el-form-item label="新密码"><el-input v-model="form.newPassword" type="password" show-password/></el-form-item><el-button type="primary" @click="save">保存新密码</el-button></el-form></section></div></template>
-
+<script setup lang="ts">
+import { reactive } from "vue";
+import { useAuthStore } from "../stores/auth";
+import http from "../api/http";
+import { ElMessage } from "element-plus";
+const auth = useAuthStore(),
+  form = reactive({ oldPassword: "", newPassword: "" });
+async function save() {
+  await http.post("/auth/change-password", form);
+  form.oldPassword = "";
+  form.newPassword = "";
+  ElMessage.success("密码已修改");
+}
+</script>
+<template>
+  <div class="page">
+    <div class="page-header"><h1 class="page-title">个人中心</h1></div>
+    <section class="card" style="max-width: 600px">
+      <el-descriptions :column="1" border
+        ><el-descriptions-item label="账号">{{
+          auth.user?.username
+        }}</el-descriptions-item
+        ><el-descriptions-item label="姓名">{{
+          auth.user?.displayName
+        }}</el-descriptions-item
+        ><el-descriptions-item label="角色">{{
+          auth.user?.roleCode
+        }}</el-descriptions-item></el-descriptions
+      ><el-divider>修改密码</el-divider
+      ><el-form label-width="90"
+        ><el-form-item label="旧密码"
+          ><el-input
+            v-model="form.oldPassword"
+            type="password"
+            show-password /></el-form-item
+        ><el-form-item label="新密码"
+          ><el-input
+            v-model="form.newPassword"
+            type="password"
+            show-password /></el-form-item
+        ><el-button type="primary" @click="save">保存新密码</el-button></el-form
+      >
+    </section>
+  </div>
+</template>

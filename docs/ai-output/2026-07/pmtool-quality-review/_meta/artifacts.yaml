@@ -1,0 +1,14 @@
+output_group: "2026-07"
+work_id: "pmtool-quality-review"
+artifacts:
+  - artifact_id: code-review-report
+    relative_path: "05-review/wf-code-review-report.md"
+    status: done
+  - artifact_id: self-check-report
+    relative_path: "05-review/wf-self-check-report.md"
+    status: done
+lifecycle:
+  status: active
+  current_stage: "05-review"
+  archive:
+    status: pending
