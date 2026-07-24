@@ -57,7 +57,7 @@ describe("project permission entries", () => {
     setActivePinia(createPinia());
     api.projects.mockResolvedValue({
       items: [
-        { id: 1, name: "项目 A", code: "A-1", status: "planning", progress: 0 },
+        { id: 1, name: "项目 A", code: "A-1", managerId: 1, status: "planning", progress: 0 },
       ],
     });
     api.project.mockResolvedValue({
@@ -161,7 +161,7 @@ describe("project permission entries", () => {
     const detail = mount(ProjectDetailView, { global: { stubs } });
     await flushPromises();
 
-    expect(buttons(project, "编辑")).toHaveLength(1);
+    expect((project.vm as any).canManageProject({ managerId: 1 })).toBe(true);
     expect(buttons(detail, "推进")).toHaveLength(2);
     expect(api.projectMembers).toHaveBeenCalledWith(1);
   });

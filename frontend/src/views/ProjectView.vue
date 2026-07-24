@@ -33,6 +33,9 @@ function search() {
   load();
 }
 onMounted(load);
+function canManageProject(project: Project) {
+  return auth.isAdmin || project.managerId === auth.user?.id;
+}
 function edit(row?: Project) {
   Object.assign(
     form,
@@ -101,12 +104,12 @@ async function remove(row: Project) {
               :percentage="
                 Number(s.row.progress)
               " /></template></el-table-column
-        ><el-table-column v-if="auth.isManager" label="操作" width="150"
+        ><el-table-column v-if="rows.some(canManageProject)" label="操作" width="150"
           ><template #default="s"
-            ><el-button link type="primary" @click.stop="edit(s.row)"
+            ><template v-if="canManageProject(s.row)"><el-button link type="primary" @click.stop="edit(s.row)"
               >编辑</el-button
             ><el-button link type="danger" @click.stop="remove(s.row)"
-              >删除</el-button
+              >删除</el-button></template
             ></template
           ></el-table-column
         ></el-table
