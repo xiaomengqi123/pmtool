@@ -38,6 +38,19 @@ class PmToolServiceTest {
     }
 
     @Test
+    void managerCannotPersistBlankCustomerOrProjectNames() {
+        PmToolService service = service();
+        authenticate(1L, "PM");
+
+        assertThatThrownBy(() -> service.saveCustomer(new CustomerInput(" ", null, null, null, null), null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("客户名称不能为空");
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", " ", null, null, null, null, null), null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("项目名称和编码不能为空");
+    }
+
+    @Test
     void memberCannotReadGlobalUserDirectory() {
         PmToolService service = service();
         authenticate(2L, "MEMBER");
