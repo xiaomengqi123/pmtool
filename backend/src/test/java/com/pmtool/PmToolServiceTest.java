@@ -99,6 +99,29 @@ class PmToolServiceTest {
     }
 
     @Test
+    void managerCannotAssignTaskToNonProjectMember() {
+        UserRepository users = mock(UserRepository.class);
+        CustomerRepository customers = mock(CustomerRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        TaskRepository tasks = mock(TaskRepository.class);
+        PmToolService service = new PmToolService(users, customers, projects, members, mock(MilestoneRepository.class), tasks, mock(TaskDependencyRepository.class), mock(WorkLogRepository.class), mock(NotificationRepository.class), mock(OperationLogRepository.class), mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        UserAccount user = new UserAccount("member", "hash", "成员", "MEMBER");
+        user.id = 2L;
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        when(users.findById(2L)).thenReturn(Optional.of(user));
+        when(members.existsByIdProjectIdAndIdUserId(10L, 2L)).thenReturn(false);
+        authenticate(1L, "PM");
+
+        assertThatThrownBy(() -> service.saveTask(new TaskInput(10L, "任务", null, 2L, "todo", "medium", null, BigDecimal.ZERO, null, null, null), null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("负责人必须是项目成员");
+    }
+
+    @Test
     void projectManagerSoftDeletesTaskAndRecalculatesProjectProgress() {
         UserRepository users = mock(UserRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);
