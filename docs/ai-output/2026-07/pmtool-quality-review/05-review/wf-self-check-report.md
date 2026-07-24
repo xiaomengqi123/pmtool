@@ -10,6 +10,7 @@
 | 前端类型检查与构建 | 通过 | `npm run build`：`vue-tsc -b` 与 Vite 构建通过。 |
 | 后端单元/上下文/安全测试 | 通过 | `mvn test`：19/19 通过，含用户目录授权与软删除、任务/风险负责人范围、客户资料与任务/工时项目范围、状态筛选分页、登录/JWT 与 OpenAPI 契约回归。 |
 | 后端可发布包 | 通过 | `mvn package` 已生成 `backend/target/pmtool-1.0.0.jar`。 |
+| 生产配置校验 | 通过 | `application-prod.yml` 强制从环境变量读取数据库、JWT、初始管理员和对象存储凭据。 |
 
 ## 功能核验
 
