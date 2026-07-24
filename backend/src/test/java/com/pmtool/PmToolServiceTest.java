@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,9 @@ class PmToolServiceTest {
         assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", " ", null, null, null, null, null), null))
             .isInstanceOf(BusinessException.class)
             .hasMessage("项目名称和编码不能为空");
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, null, LocalDateTime.of(2026, 7, 2, 0, 0), LocalDateTime.of(2026, 7, 1, 0, 0)), null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("项目开始时间不能晚于结束时间");
     }
 
     @Test
