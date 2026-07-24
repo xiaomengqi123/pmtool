@@ -178,6 +178,27 @@ class PmToolServiceTest {
     }
 
     @Test
+    void projectProgressUsesTaskAverageWhenEstimatesAreZeroOrMissing() {
+        TaskRepository tasks = mock(TaskRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        PmToolService service = new PmToolService(mock(UserRepository.class), mock(CustomerRepository.class), projects, mock(ProjectMemberRepository.class), mock(MilestoneRepository.class), tasks, mock(TaskDependencyRepository.class), mock(WorkLogRepository.class), mock(NotificationRepository.class), mock(OperationLogRepository.class), mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        TaskItem first = new TaskItem();
+        first.progress = BigDecimal.valueOf(20);
+        first.estimatedHours = BigDecimal.ZERO;
+        TaskItem second = new TaskItem();
+        second.progress = BigDecimal.valueOf(80);
+        second.estimatedHours = null;
+        when(tasks.findByProjectIdAndDeletedFalse(10L)).thenReturn(java.util.List.of(first, second));
+
+        service.recalculateProgress(project);
+
+        assertThat(project.progress).isEqualByComparingTo("50.00");
+        verify(projects).save(project);
+    }
+
+    @Test
     void managerCannotPersistInvalidProjectOrTaskStatus() {
         PmToolService service = service();
         authenticate(1L, "PM");
