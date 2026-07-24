@@ -8,6 +8,7 @@ export const api = {
   dashboard: () => unwrap<Record<string, unknown>>(http.get('/dashboard')),
   users: () => unwrap<User[]>(http.get('/users/all')), createUser:(data:Partial<User>&{password:string})=>unwrap(http.post('/users',data)),
   departments:()=>unwrap<Department[]>(http.get('/departments')), saveDepartment:(data:Partial<Department>)=>data.id?unwrap(http.put(`/departments/${data.id}`,data)):unwrap(http.post('/departments',data)), deleteDepartment:(id:number)=>unwrap(http.delete(`/departments/${id}`)), roles:()=>unwrap<Role[]>(http.get('/roles')),
+  operationLogs:(page=1,pageSize=20)=>unwrap<PageResult<any>>(http.get('/operation-logs',{params:{page,pageSize}})),
   customers:(page=1,pageSize=20)=>unwrap<PageResult<Customer>>(http.get('/customers',{params:{page,pageSize}})), saveCustomer:(data:Partial<Customer>)=>data.id?unwrap(http.put(`/customers/${data.id}`,data)):unwrap(http.post('/customers',data)),
   projects:(page=1,pageSize=20)=>unwrap<PageResult<Project>>(http.get('/projects',{params:{page,pageSize}})), project:(id:number)=>unwrap<Project>(http.get(`/projects/${id}`)), saveProject:(data:Partial<Project>)=>data.id?unwrap(http.put(`/projects/${data.id}`,data)):unwrap(http.post('/projects',data)),
   milestones:(projectId:number)=>unwrap<Milestone[]>(http.get(`/projects/${projectId}/milestones`)), saveMilestone:(projectId:number,data:Partial<Milestone>)=>data.id?unwrap(http.put(`/projects/${projectId}/milestones/${data.id}`,data)):unwrap(http.post(`/projects/${projectId}/milestones`,data)),

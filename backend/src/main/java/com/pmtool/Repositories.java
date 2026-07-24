@@ -23,4 +23,4 @@ interface NotificationRepository extends JpaRepository<NotificationItem, Long> {
 interface AttachmentRepository extends JpaRepository<Attachment, Long> { List<Attachment> findByTargetTypeAndTargetIdAndDeletedFalse(String targetType, Long targetId); }
 interface ProjectDocumentRepository extends JpaRepository<ProjectDocument, Long> { List<ProjectDocument> findByProjectIdAndDeletedFalse(Long projectId); }
 interface ProjectRiskRepository extends JpaRepository<ProjectRisk, Long> { List<ProjectRisk> findByProjectIdAndDeletedFalse(Long projectId); }
-interface OperationLogRepository extends JpaRepository<OperationLog, Long> { long deleteByCreatedAtBefore(LocalDateTime before); }
+interface OperationLogRepository extends JpaRepository<OperationLog, Long> { long deleteByCreatedAtBefore(LocalDateTime before); Page<OperationLog> findAllByOrderByCreatedAtDesc(Pageable pageable); }
