@@ -34,7 +34,7 @@ onMounted(load);
 async function edit(task: Task) {
   Object.assign(form, task);
   dialog.value = true;
-  if (auth.isManager) {
+  if (task.canManage) {
     assignees.value = (await api.projectMembers(task.projectId)).map(
       (member: any) => ({
         id: member.userId,
@@ -47,8 +47,11 @@ async function edit(task: Task) {
     );
   }
 }
+function canManageTask(task: Partial<Task>) {
+  return task.canManage === true;
+}
 function canUpdateTask(task: Partial<Task>) {
-  return auth.isManager || task.assigneeId === auth.user?.id;
+  return canManageTask(task) || task.assigneeId === auth.user?.id;
 }
 async function save() {
   await api.saveTask(form);
@@ -98,7 +101,7 @@ async function remove(task: Task) {
         </el-select>
         <el-button @click="search">查询</el-button>
       </div>
-      <div v-if="auth.isManager" class="bulk">
+      <div v-if="rows.some(canManageTask)" class="bulk">
         <span>已选 {{ selected.length }} 项</span
         ><el-select
           v-model="bulkStatus"
@@ -115,8 +118,9 @@ async function remove(task: Task) {
       </div>
       <el-table :data="rows" @selection-change="selected = $event"
         ><el-table-column
-          v-if="auth.isManager"
+          v-if="rows.some(canManageTask)"
           type="selection"
+          :selectable="canManageTask"
           width="50"
         /><el-table-column prop="title" label="任务" /><el-table-column
           prop="projectId"
@@ -141,7 +145,7 @@ async function remove(task: Task) {
           ><template #default="{ row }"
             ><el-button link type="primary" @click="edit(row)">详情</el-button
             ><el-button
-              v-if="auth.isManager"
+              v-if="canManageTask(row)"
               link
               type="danger"
               @click="remove(row)"
@@ -163,22 +167,22 @@ async function remove(task: Task) {
         ><el-form-item label="标题"
           ><el-input
             v-model="form.title"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageTask(form)" /></el-form-item
         ><el-form-item label="描述"
           ><el-input
             v-model="form.description"
             type="textarea"
             :rows="3"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageTask(form)" /></el-form-item
         ><el-form-item label="负责人"
-          ><el-select v-model="form.assigneeId" :disabled="!auth.isManager"
+          ><el-select v-model="form.assigneeId" :disabled="!canManageTask(form)"
             ><el-option
               v-for="user in assignees"
               :key="user.id"
               :label="user.displayName"
               :value="user.id" /></el-select></el-form-item
         ><el-form-item label="优先级"
-          ><el-select v-model="form.priority" :disabled="!auth.isManager"
+          ><el-select v-model="form.priority" :disabled="!canManageTask(form)"
             ><el-option label="低" value="low" /><el-option
               label="中"
               value="medium" /><el-option label="高" value="high" /><el-option
@@ -189,16 +193,16 @@ async function remove(task: Task) {
             v-model="form.startDate"
             type="datetime"
             value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled="!auth.isManager" /><el-date-picker
+            :disabled="!canManageTask(form)" /><el-date-picker
             v-model="form.dueDate"
             type="datetime"
             value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageTask(form)" /></el-form-item
         ><el-form-item label="预估工时"
           ><el-input-number
             v-model="form.estimatedHours"
             :min="0"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageTask(form)" /></el-form-item
         ><el-form-item label="状态"
           ><el-select v-model="form.status"
             :disabled="!canUpdateTask(form)"

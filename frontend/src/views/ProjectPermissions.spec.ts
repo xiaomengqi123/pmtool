@@ -141,6 +141,14 @@ describe("project permission entries", () => {
   });
 
   it("shows project editing and all task transitions to a project manager", async () => {
+    api.project.mockResolvedValue({
+      id: 1,
+      name: "项目 A",
+      code: "A-1",
+      managerId: 1,
+      status: "planning",
+      progress: 0,
+    });
     useAuthStore().user = {
       id: 1,
       username: "manager",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import type { GanttTask, Milestone, Project, Task, User } from "../types";
@@ -29,14 +29,17 @@ const route = useRoute(),
     dueDate: "",
   });
 const id = Number(route.params.id);
+const canManageProject = computed(
+  () => auth.isAdmin || project.value?.managerId === auth.user?.id,
+);
 function canUpdateTask(task: Pick<Task, "assigneeId">) {
-  return auth.isManager || task.assigneeId === auth.user?.id;
+  return canManageProject.value || task.assigneeId === auth.user?.id;
 }
 async function load() {
   const [projectData, taskData, memberData, milestoneData, ganttData, attachmentData] = await Promise.all([
     api.project(id),
     api.projectTasks(id),
-    auth.isManager ? api.projectMembers(id) : Promise.resolve([]),
+    api.projectMembers(id),
     api.milestones(id),
     api.gantt(id),
     api.attachments("project", id),
@@ -118,7 +121,7 @@ async function removeAttachment(item: any) {
   load();
 }
 function canDeleteAttachment(item: any) {
-  return auth.isManager || item.uploaderId === auth.user?.id;
+  return canManageProject.value || item.uploaderId === auth.user?.id;
 }
 </script>
 <template>
@@ -128,7 +131,7 @@ function canDeleteAttachment(item: any) {
         <h1 class="page-title">{{ project.name }}</h1>
         <p>{{ project.code }} · {{ project.status }}</p>
       </div>
-      <el-button v-if="auth.isManager" type="primary" @click="edit()"
+      <el-button v-if="canManageProject" type="primary" @click="edit()"
         >新增任务</el-button
       >
     </div>
@@ -182,7 +185,7 @@ function canDeleteAttachment(item: any) {
       <div class="section-title">
         <h3>里程碑</h3>
         <el-button
-          v-if="auth.isManager"
+          v-if="canManageProject"
           type="primary"
           size="small"
           @click="editMilestone()"
@@ -198,7 +201,7 @@ function canDeleteAttachment(item: any) {
           prop="dueDate"
           label="截止时间"
         /><el-table-column prop="status" label="状态" /><el-table-column
-          v-if="auth.isManager"
+          v-if="canManageProject"
           label="操作"
           width="130"
           ><template #default="{ row }"
@@ -280,19 +283,19 @@ function canDeleteAttachment(item: any) {
         ><el-form-item label="标题"
           ><el-input
             v-model="form.title"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageProject" /></el-form-item
         ><el-form-item label="负责人"
           ><el-select
             v-model="form.assigneeId"
             clearable
-            :disabled="!auth.isManager"
+            :disabled="!canManageProject"
             ><el-option
               v-for="u in users"
               :key="u.id"
               :label="u.displayName"
               :value="u.id" /></el-select></el-form-item
         ><el-form-item label="优先级"
-          ><el-select v-model="form.priority" :disabled="!auth.isManager"
+          ><el-select v-model="form.priority" :disabled="!canManageProject"
             ><el-option label="低" value="low" /><el-option
               label="中"
               value="medium" /><el-option label="高" value="high" /><el-option
@@ -302,17 +305,17 @@ function canDeleteAttachment(item: any) {
           ><el-input-number
             v-model="form.estimatedHours"
             :min="0"
-            :disabled="!auth.isManager" /></el-form-item
+            :disabled="!canManageProject" /></el-form-item
         ><el-form-item label="执行进度"
           ><el-slider
             v-model="form.progress"
             :disabled="
-              !auth.isManager && form.assigneeId !== auth.user?.id
+              !canManageProject && form.assigneeId !== auth.user?.id
             " /></el-form-item></el-form
       ><template #footer
         ><el-button @click="dialog = false">取消</el-button
         ><el-button
-          v-if="auth.isManager || form.assigneeId === auth.user?.id"
+          v-if="canManageProject || form.assigneeId === auth.user?.id"
           type="primary"
           @click="save"
           >保存</el-button

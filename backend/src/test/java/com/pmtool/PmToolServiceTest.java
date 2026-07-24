@@ -96,6 +96,11 @@ class PmToolServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting(error -> ((BusinessException) error).status)
             .isEqualTo(HttpStatus.FORBIDDEN);
+        authenticate(2L, "PM");
+        assertThatThrownBy(() -> service.updateTaskStatus(20L, "done", 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting(error -> ((BusinessException) error).status)
+            .isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test

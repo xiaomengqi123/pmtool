@@ -69,6 +69,7 @@ export interface Task {
   startDate?: string;
   dueDate?: string;
   version: number;
+  canManage?: boolean;
 }
 export interface Customer {
   id: number;
