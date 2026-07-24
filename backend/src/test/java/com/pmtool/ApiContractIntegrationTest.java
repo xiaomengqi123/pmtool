@@ -42,7 +42,7 @@ class ApiContractIntegrationTest {
     @Test
     void protectedEndpointRejectsUnauthenticatedRequest() throws Exception {
         mvc.perform(get("/api/v1/auth/info"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -52,7 +52,7 @@ class ApiContractIntegrationTest {
         users.save(disabled);
 
         mvc.perform(get("/api/v1/auth/info").header("Authorization", "Bearer " + jwt.create(disabled)))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
