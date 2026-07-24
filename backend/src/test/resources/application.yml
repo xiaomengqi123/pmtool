@@ -22,7 +22,7 @@ pmtool:
     username: test-admin
     password: test-password-123
   cors:
-    allowed-origins: http://localhost:8989
+    allowed-origins: http://localhost:8989,http://127.0.0.1:8989
 logging:
   level:
     root: WARN
