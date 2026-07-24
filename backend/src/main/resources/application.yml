@@ -1,0 +1,40 @@
+server:
+  port: ${SERVER_PORT:5959}
+  error:
+    include-message: never
+spring:
+  application:
+    name: pmtool
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:pmtool_db}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:pmtool}
+    password: ${DB_PASSWORD:pmtool}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+pmtool:
+  jwt:
+    secret: ${JWT_SECRET:pmtool-development-secret-change-before-production-1234}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:30}
+  admin:
+    username: ${INITIAL_ADMIN_USERNAME:admin}
+    password: ${INITIAL_ADMIN_PASSWORD:admin123}
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:pmtool}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+

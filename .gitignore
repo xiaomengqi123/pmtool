@@ -1,0 +1,10 @@
+.idea/
+.vscode/
+**/node_modules/
+**/dist/
+**/target/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example

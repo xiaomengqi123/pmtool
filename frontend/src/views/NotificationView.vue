@@ -1,0 +1,3 @@
+<script setup lang="ts">import { onMounted, ref } from 'vue';import { api } from '../api';const rows=ref<any[]>([]);async function load(){rows.value=await api.notifications()}onMounted(load);async function read(id:number){await api.read(id);load()}</script>
+<template><div class="page"><div class="page-header"><h1 class="page-title">通知中心</h1></div><section class="card"><el-empty v-if="!rows.length" description="暂无通知"/><el-timeline v-else><el-timeline-item v-for="n in rows" :key="n.id" :type="n.read?'info':'primary'" :timestamp="n.createdAt"><b>{{n.title}}</b><p>{{n.content}}</p><el-button v-if="!n.read" size="small" @click="read(n.id)">标记已读</el-button></el-timeline-item></el-timeline></section></div></template>
+
