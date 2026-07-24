@@ -66,6 +66,7 @@ jobs:
           retention-days: 1
 
   deploy:
+    if: vars.PMTOOL_DEPLOY_ENABLED == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment: production
@@ -116,7 +117,7 @@ jobs:
             "$package_dir/deploy/release.sh" "$package_dir/pmtool-release.tar.gz" "${{ github.sha }}"
 
   rollback:
-    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'rollback'
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'rollback' && vars.PMTOOL_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: production
     steps:
