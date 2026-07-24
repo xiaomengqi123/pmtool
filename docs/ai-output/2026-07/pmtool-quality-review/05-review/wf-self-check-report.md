@@ -40,6 +40,7 @@
 | TC-WORKLOG-03 | 非负责项目的项目经理不能修改他人工时或已审批工时 | 通过 | `PmToolService.saveWorkLog` 将项目管理权与普通成员自身工时权限分离。 |
 | TC-WORKLOG-04 | 工时页面仅展示当前用户可管理项目的审批/修改入口 | 通过 | 工时接口返回 `canManage`，页面据此呈现操作入口；后端继续执行最终授权。 |
 | TC-ATTACH-01 | 任意类型、单文件最大 2 MB、受控下载和删除 | 通过 | `ObjectStorage.java` 与项目附件页面。 |
+| TC-ATTACH-02 | 附件下载响应头使用安全文件名 | 通过 | 缺失文件名使用默认值，并清除引号、回车和换行字符。 |
 | TC-AUDIT-01 | 操作日志与 180 天清理 | 通过 | `PmToolService.cleanLogs`。 |
 
 ## 待部署环境验证
