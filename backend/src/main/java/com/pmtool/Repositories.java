@@ -9,6 +9,8 @@ import java.util.Optional;
 
 interface UserRepository extends JpaRepository<UserAccount, Long> { Optional<UserAccount> findByUsernameAndDeletedFalse(String username); Page<UserAccount> findByDeletedFalse(Pageable pageable); }
 interface CustomerRepository extends JpaRepository<Customer, Long> { Page<Customer> findByDeletedFalse(Pageable pageable); }
+interface CustomerContactRepository extends JpaRepository<CustomerContact, Long> { List<CustomerContact> findByCustomerIdAndDeletedFalse(Long customerId); }
+interface CustomerFollowUpRepository extends JpaRepository<CustomerFollowUp, Long> { List<CustomerFollowUp> findByCustomerIdAndDeletedFalseOrderByFollowUpAtDesc(Long customerId); }
 interface ProjectRepository extends JpaRepository<Project, Long> { Page<Project> findByDeletedFalse(Pageable pageable); List<Project> findByManagerIdAndDeletedFalse(Long managerId); }
 interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> { boolean existsByIdProjectIdAndIdUserId(Long projectId, Long userId); List<ProjectMember> findByIdProjectId(Long projectId); }
 interface TaskRepository extends JpaRepository<TaskItem, Long> { Page<TaskItem> findByDeletedFalse(Pageable pageable); List<TaskItem> findByProjectIdAndDeletedFalseOrderBySortOrderAsc(Long projectId); List<TaskItem> findByProjectIdAndDeletedFalse(Long projectId); }

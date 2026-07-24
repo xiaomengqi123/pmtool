@@ -28,12 +28,13 @@ class AttachmentService {
 }
 @RestController @RequestMapping("/api/v1/attachments")
 class AttachmentController {
-    private final AttachmentService service;private final AttachmentRepository repository;
-    AttachmentController(AttachmentService service,AttachmentRepository repository){this.service=service;this.repository=repository;}
-    @GetMapping("/{targetType}/{targetId}") ApiResponse<?> list(@PathVariable String targetType,@PathVariable Long targetId){return ApiResponse.ok(repository.findByTargetTypeAndTargetIdAndDeletedFalse(targetType,targetId).stream().map(this::view).toList());}
-    @PostMapping("/{targetType}/{targetId}") ApiResponse<?> upload(@PathVariable String targetType,@PathVariable Long targetId,@RequestParam("file") MultipartFile file){return ApiResponse.ok(view(service.upload(targetType,targetId,file)));}
-    @GetMapping("/{id}/download") ResponseEntity<StreamingResponseBody> download(@PathVariable Long id){Attachment a=service.get(id);return ResponseEntity.ok().contentType(MediaType.parseMediaType(Optional.ofNullable(a.contentType).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE))).header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+a.originalName.replace("\"","")+"\"").body(out->{try(InputStream in=service.stream(a)){in.transferTo(out);}});}
-    @DeleteMapping("/{id}") ApiResponse<Void> delete(@PathVariable Long id){Attachment a=service.get(id);a.deleted=true;repository.save(a);return ApiResponse.ok(null);}
+    private final AttachmentService service;private final AttachmentRepository repository;private final PmToolService pmTool;
+    AttachmentController(AttachmentService service,AttachmentRepository repository,PmToolService pmTool){this.service=service;this.repository=repository;this.pmTool=pmTool;}
+    @GetMapping("/{targetType}/{targetId}") ApiResponse<?> list(@PathVariable String targetType,@PathVariable Long targetId){authorize(targetType,targetId);return ApiResponse.ok(repository.findByTargetTypeAndTargetIdAndDeletedFalse(targetType,targetId).stream().map(this::view).toList());}
+    @PostMapping("/{targetType}/{targetId}") ApiResponse<?> upload(@PathVariable String targetType,@PathVariable Long targetId,@RequestParam("file") MultipartFile file){authorize(targetType,targetId);return ApiResponse.ok(view(service.upload(targetType,targetId,file)));}
+    @GetMapping("/{id}/download") ResponseEntity<StreamingResponseBody> download(@PathVariable Long id){Attachment a=service.get(id);authorize(a.targetType,a.targetId);return ResponseEntity.ok().contentType(MediaType.parseMediaType(Optional.ofNullable(a.contentType).orElse(MediaType.APPLICATION_OCTET_STREAM_VALUE))).header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+a.originalName.replace("\"","")+"\"").body(out->{try(InputStream in=service.stream(a)){in.transferTo(out);}});}
+    @DeleteMapping("/{id}") ApiResponse<Void> delete(@PathVariable Long id){Attachment a=service.get(id);authorize(a.targetType,a.targetId);if(!Objects.equals(a.uploaderId,pmTool.current().id()))requireTargetManager(a.targetType,a.targetId);a.deleted=true;repository.save(a);pmTool.log("DELETE","ATTACHMENT",a.id,a.originalName);return ApiResponse.ok(null);}
+    private void authorize(String targetType,Long targetId){if("project".equals(targetType)){pmTool.ensureProjectAccess(pmTool.project(targetId),pmTool.current());return;}if("task".equals(targetType)){TaskItem task=pmTool.task(targetId);pmTool.ensureProjectAccess(pmTool.project(task.projectId),pmTool.current());return;}throw pmTool.fail(40001,org.springframework.http.HttpStatus.BAD_REQUEST,"不支持的附件归属类型");}
+    private void requireTargetManager(String targetType,Long targetId){if("project".equals(targetType)){pmTool.ensureProjectManager(pmTool.project(targetId),pmTool.current());return;}TaskItem task=pmTool.task(targetId);pmTool.ensureProjectManager(pmTool.project(task.projectId),pmTool.current());}
     private Map<String,Object> view(Attachment a){return Map.of("id",a.id,"name",a.originalName,"contentType",Optional.ofNullable(a.contentType).orElse("application/octet-stream"),"size",a.sizeBytes,"createdAt",a.createdAt);}
 }
-

@@ -34,6 +34,24 @@ class Customer extends BaseEntity {
     protected Customer() {}
 }
 
+@Entity @Table(name = "customer_contacts")
+class CustomerContact extends BaseEntity {
+    @Column(name="customer_id", nullable=false) Long customerId;
+    @Column(nullable=false) String name;
+    @Column(name="position_name") String positionName;
+    String phone; String email;
+    protected CustomerContact() {}
+}
+
+@Entity @Table(name = "customer_follow_ups")
+class CustomerFollowUp extends BaseEntity {
+    @Column(name="customer_id", nullable=false) Long customerId;
+    @Column(nullable=false, length=1000) String content;
+    @Column(name="follow_up_at", nullable=false) LocalDateTime followUpAt;
+    @Column(name="creator_id", nullable=false) Long creatorId;
+    protected CustomerFollowUp() {}
+}
+
 @Entity @Table(name = "projects")
 class Project extends BaseEntity {
     @Column(nullable=false) String name; @Column(nullable=false, unique=true) String code;

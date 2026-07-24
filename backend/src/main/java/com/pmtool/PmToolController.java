@@ -31,7 +31,7 @@ public class PmToolController {
     @PutMapping("/customers/{id}") ApiResponse<?> updateCustomer(@PathVariable Long id,@RequestBody CustomerInput body){return ApiResponse.ok(customerView(service.saveCustomer(body,id)));}
     @DeleteMapping("/customers/{id}") ApiResponse<Void> removeCustomer(@PathVariable Long id){Customer c=service.customer(id);service.requireManager();c.deleted=true;customers.save(c);return ApiResponse.ok(null);}
 
-    @GetMapping("/projects") ApiResponse<?> projects(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(projects.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(service::projectView)));}
+    @GetMapping("/projects") ApiResponse<?> projects(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleProjects().stream().map(service::projectView).toList(),page,pageSize));}
     @GetMapping("/projects/{id}") ApiResponse<?> project(@PathVariable Long id){Project p=service.project(id);service.ensureProjectAccess(p,service.current());return ApiResponse.ok(service.projectView(p));}
     @PostMapping("/projects") ApiResponse<?> addProject(@RequestBody ProjectInput body){return ApiResponse.ok(service.projectView(service.saveProject(body,null)));}
     @PutMapping("/projects/{id}") ApiResponse<?> updateProject(@PathVariable Long id,@RequestBody ProjectInput body){return ApiResponse.ok(service.projectView(service.saveProject(body,id)));}
@@ -39,13 +39,13 @@ public class PmToolController {
     @PostMapping("/projects/{id}/members") ApiResponse<Void> addMember(@PathVariable Long id,@RequestBody MemberBody body){service.addMember(id,body.userId(),body.roleCode());return ApiResponse.ok(null);}
     @GetMapping("/projects/{id}/tasks") ApiResponse<?> projectTasks(@PathVariable Long id){Project p=service.project(id);service.ensureProjectAccess(p,service.current());return ApiResponse.ok(tasks.findByProjectIdAndDeletedFalseOrderBySortOrderAsc(id).stream().map(this::taskView).toList());}
 
-    @GetMapping("/tasks") ApiResponse<?> taskList(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(tasks.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(this::taskView)));}
+    @GetMapping("/tasks") ApiResponse<?> taskList(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleTasks().stream().map(this::taskView).toList(),page,pageSize));}
     @PostMapping("/tasks") ApiResponse<?> addTask(@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,null)));}
     @PutMapping("/tasks/{id}") ApiResponse<?> updateTask(@PathVariable Long id,@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,id)));}
     @PatchMapping("/tasks/{id}/status") ApiResponse<Void> taskStatus(@PathVariable Long id,@RequestBody StatusBody body){service.updateTaskStatus(id,body.status(),body.version());return ApiResponse.ok(null);}
     @PostMapping("/tasks/project/{projectId}/reorder") ApiResponse<Void> reorder(@PathVariable Long projectId,@RequestBody ReorderBody body){service.reorder(projectId,body.taskIds());return ApiResponse.ok(null);}
 
-    @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(logs.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(this::workLogView)));}
+    @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleWorkLogs().stream().map(this::workLogView).toList(),page,pageSize));}
     @PostMapping("/work-logs") ApiResponse<?> addWorkLog(@RequestBody WorkLogInput body){return ApiResponse.ok(workLogView(service.saveWorkLog(body,null)));}
     @PutMapping("/work-logs/{id}") ApiResponse<?> updateWorkLog(@PathVariable Long id,@RequestBody WorkLogInput body){return ApiResponse.ok(workLogView(service.saveWorkLog(body,id)));}
     @PostMapping("/work-logs/{id}/approve") ApiResponse<Void> approve(@PathVariable Long id){service.reviewWorkLog(id,true,null);return ApiResponse.ok(null);}
@@ -57,8 +57,8 @@ public class PmToolController {
     @GetMapping("/dashboard") ApiResponse<?> dashboard(){return ApiResponse.ok(service.dashboard());}
 
     private <T> Map<String,Object> page(org.springframework.data.domain.Page<T> p){return Map.of("items",p.getContent(),"total",p.getTotalElements(),"page",p.getNumber()+1,"pageSize",p.getSize());}
+    private <T> Map<String,Object> page(List<T> all,int page,int pageSize){int safePage=Math.max(1,page),safeSize=Math.min(100,Math.max(1,pageSize)),from=Math.min(all.size(),(safePage-1)*safeSize),to=Math.min(all.size(),from+safeSize);return Map.of("items",all.subList(from,to),"total",all.size(),"page",safePage,"pageSize",safeSize);}
     private Map<String,Object> customerView(Customer c){return Map.of("id",c.id,"name",c.name,"level",c.level,"status",c.status,"contactName",Optional.ofNullable(c.contactName).orElse(""),"phone",Optional.ofNullable(c.phone).orElse(""));}
     private Map<String,Object> taskView(TaskItem t){return Map.of("id",t.id,"projectId",t.projectId,"title",t.title,"assigneeId",Optional.ofNullable(t.assigneeId).orElse(0L),"status",t.status,"priority",t.priority,"estimatedHours",Optional.ofNullable(t.estimatedHours).orElse(java.math.BigDecimal.ZERO),"progress",t.progress,"sortOrder",t.sortOrder,"version",t.version==null?0:t.version);}
     private Map<String,Object> workLogView(WorkLog w){return Map.of("id",w.id,"taskId",w.taskId,"userId",w.userId,"hours",w.hours,"workDate",w.workDate,"description",Optional.ofNullable(w.description).orElse(""),"status",w.status,"reviewerId",Optional.ofNullable(w.reviewerId).orElse(0L),"version",w.version==null?0:w.version);}
 }
-
