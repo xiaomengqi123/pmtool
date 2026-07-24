@@ -30,7 +30,7 @@ public class PmToolController {
     @PutMapping("/users/{id}") ApiResponse<?> updateUser(@PathVariable Long id,@RequestBody UserUpdateInput body){return ApiResponse.ok(service.userView(service.updateUser(id,body)));}
     @PostMapping("/users/{id}/reset-password") ApiResponse<Void> resetPassword(@PathVariable Long id,@Valid @RequestBody ResetPasswordBody body){service.resetPassword(id,body.password());return ApiResponse.ok(null);}
 
-    @GetMapping("/customers") ApiResponse<?> customers(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(customers.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(this::customerView)));}
+    @GetMapping("/customers") ApiResponse<?> customers(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){service.requireManager();return ApiResponse.ok(page(customers.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(this::customerView)));}
     @PostMapping("/customers") ApiResponse<?> addCustomer(@RequestBody CustomerInput body){return ApiResponse.ok(customerView(service.saveCustomer(body,null)));}
     @PutMapping("/customers/{id}") ApiResponse<?> updateCustomer(@PathVariable Long id,@RequestBody CustomerInput body){return ApiResponse.ok(customerView(service.saveCustomer(body,id)));}
     @DeleteMapping("/customers/{id}") ApiResponse<Void> removeCustomer(@PathVariable Long id){Customer c=service.customer(id);service.requireManager();c.deleted=true;customers.save(c);return ApiResponse.ok(null);}

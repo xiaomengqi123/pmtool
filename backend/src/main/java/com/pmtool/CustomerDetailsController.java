@@ -19,7 +19,7 @@ class CustomerDetailsController {
     }
 
     @GetMapping("/contacts") ApiResponse<?> contacts(@PathVariable Long customerId) {
-        service.customer(customerId);
+        service.requireManager(); service.customer(customerId);
         return ApiResponse.ok(contacts.findByCustomerIdAndDeletedFalse(customerId).stream().map(this::contactView).toList());
     }
 
@@ -44,7 +44,7 @@ class CustomerDetailsController {
     }
 
     @GetMapping("/follow-ups") ApiResponse<?> followUps(@PathVariable Long customerId) {
-        service.customer(customerId);
+        service.requireManager(); service.customer(customerId);
         return ApiResponse.ok(followUps.findByCustomerIdAndDeletedFalseOrderByFollowUpAtDesc(customerId).stream().map(this::followUpView).toList());
     }
 
