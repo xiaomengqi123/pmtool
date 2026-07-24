@@ -35,7 +35,10 @@ export interface Project {
   code: string;
   managerId: number;
   customerId: number;
+  description: string;
   status: string;
+  startDate: string | null;
+  endDate: string | null;
   progress: number;
   version: number;
 }
@@ -43,14 +46,14 @@ export interface Milestone {
   id: number;
   projectId: number;
   name: string;
-  dueDate: string;
+  dueDate: string | null;
   status: string;
 }
 export interface GanttTask {
   id: number;
   title: string;
-  startDate: string;
-  dueDate: string;
+  startDate: string | null;
+  dueDate: string | null;
   progress: number;
   status: string;
   dependsOn: number[];
@@ -66,8 +69,8 @@ export interface Task {
   estimatedHours: number;
   progress: number;
   sortOrder: number;
-  startDate?: string;
-  dueDate?: string;
+  startDate?: string | null;
+  dueDate?: string | null;
   version: number;
   canManage?: boolean;
 }

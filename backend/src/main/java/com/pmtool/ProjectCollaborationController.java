@@ -24,5 +24,5 @@ class ProjectCollaborationController {
     private String validMilestoneStatus(String status){String value=Optional.ofNullable(status).orElse("pending");if(!Set.of("pending","in_progress","completed","overdue").contains(value))throw service.fail(40001,HttpStatus.BAD_REQUEST,"里程碑状态无效");return value;}
     private Project access(Long id){Project project=service.project(id);service.ensureProjectAccess(project,service.current());return project;}
     private Project manage(Long id){Project project=service.project(id);service.ensureProjectManager(project,service.current());return project;}
-    private Map<String,Object> view(Milestone item){return Map.of("id",item.id,"projectId",item.projectId,"name",item.name,"dueDate",Optional.ofNullable(item.dueDate).map(Object::toString).orElse(""),"status",item.status);}
+    private Map<String,Object> view(Milestone item){Map<String,Object> result=new LinkedHashMap<>();result.put("id",item.id);result.put("projectId",item.projectId);result.put("name",item.name);result.put("dueDate",item.dueDate==null?null:item.dueDate.toString());result.put("status",item.status);return result;}
 }

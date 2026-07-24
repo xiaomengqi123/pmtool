@@ -193,7 +193,7 @@ describe("project permission entries", () => {
     await (project.vm as any).save();
 
     expect(api.saveProject).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 1, version: 3 }),
+      expect.objectContaining({ id: 1, version: 3, startDate: null, endDate: null }),
     );
   });
 

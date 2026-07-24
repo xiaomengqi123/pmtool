@@ -1,6 +1,7 @@
 package com.pmtool;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -100,6 +101,13 @@ class ApiContractIntegrationTest {
             .andExpect(status().isForbidden());
         mvc.perform(post("/api/v1/notifications/" + notification.id + "/read").header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden());
+        NotificationItem ownNotification = notifications.save(new NotificationItem(member.id, "我的通知", "内容", "test"));
+        mvc.perform(post("/api/v1/notifications/" + ownNotification.id + "/read").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+        String adminToken = login("test-admin", "test-password-123");
+        mvc.perform(get("/api/v1/operation-logs").header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[?(@.action == 'UPDATE' && @.resourceType == 'NOTIFICATION')]").isNotEmpty());
     }
 
     @Test
@@ -146,6 +154,51 @@ class ApiContractIntegrationTest {
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.items").isArray());
+    }
+
+    @Test
+    void nullableScheduleFieldsRemainNullAndSoftDeletesAreAudited() throws Exception {
+        String token = login("test-admin", "test-password-123");
+        MvcResult customer = mvc.perform(post("/api/v1/customers")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"日期契约客户\",\"status\":\"active\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        Long customerId = readId(customer, "$.data.id");
+        MvcResult project = mvc.perform(post("/api/v1/projects")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"日期契约项目\",\"code\":\"NULL-DATES-001\",\"description\":\"应完整回显\",\"status\":\"planning\",\"startDate\":null,\"endDate\":null}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.description").value("应完整回显"))
+            .andExpect(jsonPath("$.data.startDate").value(org.hamcrest.Matchers.nullValue()))
+            .andExpect(jsonPath("$.data.endDate").value(org.hamcrest.Matchers.nullValue()))
+            .andReturn();
+        Long projectId = readId(project, "$.data.id");
+
+        mvc.perform(post("/api/v1/tasks")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"projectId\":" + projectId + ",\"title\":\"无排期任务\",\"status\":\"todo\",\"priority\":\"medium\",\"startDate\":null,\"dueDate\":null}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.startDate").value(org.hamcrest.Matchers.nullValue()))
+            .andExpect(jsonPath("$.data.dueDate").value(org.hamcrest.Matchers.nullValue()));
+        mvc.perform(post("/api/v1/projects/" + projectId + "/milestones")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"无日期里程碑\",\"dueDate\":null,\"status\":\"pending\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.dueDate").value(org.hamcrest.Matchers.nullValue()));
+
+        mvc.perform(delete("/api/v1/customers/" + customerId).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+        mvc.perform(delete("/api/v1/projects/" + projectId).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/operation-logs").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[?(@.action == 'DELETE' && @.resourceType == 'CUSTOMER')]").isNotEmpty())
+            .andExpect(jsonPath("$.data.items[?(@.action == 'DELETE' && @.resourceType == 'PROJECT')]").isNotEmpty());
     }
 
     @Test

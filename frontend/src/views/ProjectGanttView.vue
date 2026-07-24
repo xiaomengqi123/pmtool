@@ -12,7 +12,10 @@ async function load() {
 }
 onMounted(load);
 const dated = computed(() =>
-  rows.value.filter((row) => row.startDate && row.dueDate),
+  rows.value.filter(
+    (row): row is GanttTask & { startDate: string; dueDate: string } =>
+      Boolean(row.startDate && row.dueDate),
+  ),
 );
 const range = computed(() => {
   const values = dated.value.flatMap((row) => [

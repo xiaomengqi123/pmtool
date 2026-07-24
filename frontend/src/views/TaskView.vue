@@ -54,7 +54,11 @@ function canUpdateTask(task: Partial<Task>) {
   return canManageTask(task) || task.assigneeId === auth.user?.id;
 }
 async function save() {
-  await api.saveTask(form);
+  await api.saveTask({
+    ...form,
+    startDate: form.startDate || null,
+    dueDate: form.dueDate || null,
+  });
   dialog.value = false;
   ElMessage.success("任务已保存");
   load();

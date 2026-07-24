@@ -92,7 +92,10 @@ function editMilestone(item?: Milestone) {
   milestoneDialog.value = true;
 }
 async function saveMilestone() {
-  await api.saveMilestone(id, milestoneForm);
+  await api.saveMilestone(id, {
+    ...milestoneForm,
+    dueDate: milestoneForm.dueDate || null,
+  });
   milestoneDialog.value = false;
   ElMessage.success("里程碑已保存");
   load();

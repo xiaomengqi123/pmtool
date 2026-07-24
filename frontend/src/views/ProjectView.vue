@@ -19,6 +19,8 @@ const rows = ref<Project[]>([]),
     code: "",
     status: "planning",
     description: "",
+    startDate: null,
+    endDate: null,
   });
 async function load() {
   const result = await api.projects(page.value, pageSize, {
@@ -45,12 +47,18 @@ function edit(row?: Project) {
       code: "",
       status: "planning",
       description: "",
+      startDate: null,
+      endDate: null,
     },
   );
   dialog.value = true;
 }
 async function save() {
-  await api.saveProject(form);
+  await api.saveProject({
+    ...form,
+    startDate: form.startDate || null,
+    endDate: form.endDate || null,
+  });
   dialog.value = false;
   ElMessage.success("项目已保存");
   load();
@@ -142,7 +150,17 @@ async function remove(row: Project) {
         ><el-form-item label="说明"
           ><el-input
             v-model="form.description"
-            type="textarea" /></el-form-item></el-form
+            type="textarea" /></el-form-item
+        ><el-form-item label="计划周期"
+          ><el-date-picker
+            v-model="form.startDate"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="开始时间" /><el-date-picker
+            v-model="form.endDate"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="结束时间" /></el-form-item></el-form
       ><template #footer
         ><el-button @click="dialog = false">取消</el-button
         ><el-button type="primary" @click="save">保存</el-button></template
