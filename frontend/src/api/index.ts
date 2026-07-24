@@ -46,6 +46,7 @@ export const api = {
     data.id
       ? unwrap(http.put(`/customers/${data.id}`, data))
       : unwrap(http.post("/customers", data)),
+  deleteCustomer: (id: number) => unwrap(http.delete(`/customers/${id}`)),
   contacts: (customerId: number) =>
     unwrap<any[]>(http.get(`/customers/${customerId}/contacts`)),
   saveContact: (customerId: number, data: any) =>
@@ -67,12 +68,15 @@ export const api = {
     data.id
       ? unwrap(http.put(`/projects/${data.id}`, data))
       : unwrap(http.post("/projects", data)),
+  deleteProject: (id: number) => unwrap(http.delete(`/projects/${id}`)),
   milestones: (projectId: number) =>
     unwrap<Milestone[]>(http.get(`/projects/${projectId}/milestones`)),
   saveMilestone: (projectId: number, data: Partial<Milestone>) =>
     data.id
       ? unwrap(http.put(`/projects/${projectId}/milestones/${data.id}`, data))
       : unwrap(http.post(`/projects/${projectId}/milestones`, data)),
+  deleteMilestone: (projectId: number, id: number) =>
+    unwrap(http.delete(`/projects/${projectId}/milestones/${id}`)),
   gantt: (projectId: number) =>
     unwrap<GanttTask[]>(http.get(`/projects/${projectId}/gantt`)),
   documents: (projectId: number) =>
@@ -133,6 +137,7 @@ export const api = {
     data.id
       ? unwrap(http.put(`/tasks/${data.id}`, data))
       : unwrap(http.post("/tasks", data)),
+  deleteTask: (id: number) => unwrap(http.delete(`/tasks/${id}`)),
   status: (id: number, status: string, version: number) =>
     unwrap(http.patch(`/tasks/${id}/status`, { status, version })),
   workLogs: (page = 1, pageSize = 20) =>

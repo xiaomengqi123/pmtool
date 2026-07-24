@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { api } from "../api";
 import type { Project } from "../types";
 import { useAuthStore } from "../stores/auth";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<Project[]>([]),
   dialog = ref(false),
   router = useRouter(),
@@ -38,6 +38,16 @@ async function save() {
   ElMessage.success("项目已保存");
   load();
 }
+async function remove(row: Project) {
+  await ElMessageBox.confirm(
+    `删除项目“${row.name}”？项目数据将进入软删除状态。`,
+    "确认删除",
+    { type: "warning" },
+  );
+  await api.deleteProject(row.id);
+  ElMessage.success("项目已删除");
+  load();
+}
 </script>
 <template>
   <div class="page">
@@ -61,10 +71,12 @@ async function save() {
               :percentage="
                 Number(s.row.progress)
               " /></template></el-table-column
-        ><el-table-column v-if="auth.isManager" label="操作" width="100"
+        ><el-table-column v-if="auth.isManager" label="操作" width="150"
           ><template #default="s"
             ><el-button link type="primary" @click.stop="edit(s.row)"
               >编辑</el-button
+            ><el-button link type="danger" @click.stop="remove(s.row)"
+              >删除</el-button
             ></template
           ></el-table-column
         ></el-table

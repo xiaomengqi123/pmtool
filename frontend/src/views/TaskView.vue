@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { api } from "../api";
 import type { Task, User } from "../types";
 import { useAuthStore } from "../stores/auth";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<Task[]>([]),
   users = ref<User[]>([]),
   selected = ref<Task[]>([]),
@@ -39,6 +39,16 @@ async function batch() {
   ElMessage.success("任务状态已批量更新");
   selected.value = [];
   bulkStatus.value = "";
+  load();
+}
+async function remove(task: Task) {
+  await ElMessageBox.confirm(
+    `删除任务“${task.title}”？相关工时、附件和依赖记录将保留用于审计。`,
+    "确认删除",
+    { type: "warning" },
+  );
+  await api.deleteTask(task.id);
+  ElMessage.success("任务已删除");
   load();
 }
 </script>
@@ -85,10 +95,15 @@ async function batch() {
           ><template #default="{ row }"
             ><el-progress
               :percentage="Number(row.progress)" /></template></el-table-column
-        ><el-table-column label="操作" width="80"
+        ><el-table-column label="操作" width="130"
           ><template #default="{ row }"
-            ><el-button link type="primary" @click="edit(row)"
-              >详情</el-button
+            ><el-button link type="primary" @click="edit(row)">详情</el-button
+            ><el-button
+              v-if="auth.isManager"
+              link
+              type="danger"
+              @click="remove(row)"
+              >删除</el-button
             ></template
           ></el-table-column
         ></el-table

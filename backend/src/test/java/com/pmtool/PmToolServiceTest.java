@@ -1,9 +1,11 @@
 package com.pmtool;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -65,6 +67,39 @@ class PmToolServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting(error -> ((BusinessException) error).status)
             .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void projectManagerSoftDeletesTaskAndRecalculatesProjectProgress() {
+        UserRepository users = mock(UserRepository.class);
+        CustomerRepository customers = mock(CustomerRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        MilestoneRepository milestones = mock(MilestoneRepository.class);
+        TaskRepository tasks = mock(TaskRepository.class);
+        TaskDependencyRepository dependencies = mock(TaskDependencyRepository.class);
+        WorkLogRepository logs = mock(WorkLogRepository.class);
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        OperationLogRepository operationLogs = mock(OperationLogRepository.class);
+        PmToolService service = new PmToolService(users, customers, projects, members, milestones, tasks, dependencies, logs, notifications, operationLogs, mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        TaskItem task = new TaskItem();
+        task.id = 20L;
+        task.projectId = 10L;
+        task.title = "待删除任务";
+        task.progress = BigDecimal.ZERO;
+        when(tasks.findById(20L)).thenReturn(Optional.of(task));
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        when(tasks.findByProjectIdAndDeletedFalse(10L)).thenReturn(java.util.List.of());
+        authenticate(1L, "PM");
+
+        service.deleteTask(20L);
+
+        assertThat(task.deleted).isTrue();
+        verify(tasks).save(task);
+        verify(projects).save(project);
     }
 
     private PmToolService service() {

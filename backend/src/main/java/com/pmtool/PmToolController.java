@@ -46,6 +46,7 @@ public class PmToolController {
     @GetMapping("/tasks") ApiResponse<?> taskList(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleTasks().stream().map(this::taskView).toList(),page,pageSize));}
     @PostMapping("/tasks") ApiResponse<?> addTask(@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,null)));}
     @PutMapping("/tasks/{id}") ApiResponse<?> updateTask(@PathVariable Long id,@RequestBody TaskInput body){return ApiResponse.ok(taskView(service.saveTask(body,id)));}
+    @DeleteMapping("/tasks/{id}") ApiResponse<Void> removeTask(@PathVariable Long id){service.deleteTask(id);return ApiResponse.ok(null);}
     @PatchMapping("/tasks/{id}/status") ApiResponse<Void> taskStatus(@PathVariable Long id,@RequestBody StatusBody body){service.updateTaskStatus(id,body.status(),body.version());return ApiResponse.ok(null);}
     @PostMapping("/tasks/batch-status") ApiResponse<Void> batchStatus(@RequestBody BatchTaskStatusInput body){service.batchUpdateStatus(body);return ApiResponse.ok(null);}
     @GetMapping("/tasks/{id}/dependencies") ApiResponse<?> dependencies(@PathVariable Long id){return ApiResponse.ok(service.dependenciesOf(id));}

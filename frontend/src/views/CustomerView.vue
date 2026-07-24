@@ -49,6 +49,14 @@ async function save() {
   dialog.value = false;
   load();
 }
+async function remove(row: Customer) {
+  await ElMessageBox.confirm(`删除客户“${row.name}”？`, "确认删除", {
+    type: "warning",
+  });
+  await api.deleteCustomer(row.id);
+  ElMessage.success("客户已删除");
+  load();
+}
 async function detail(row: Customer) {
   current.value = row;
   await loadDetails();
@@ -110,12 +118,13 @@ async function saveFollowUp() {
         /><el-table-column prop="contactName" label="联系人" /><el-table-column
           prop="phone"
           label="电话"
-        /><el-table-column label="操作" width="160"
+        /><el-table-column label="操作" width="210"
           ><template #default="s"
             ><el-button link type="primary" @click="detail(s.row)"
               >详情</el-button
-            ><el-button link type="primary" @click="edit(s.row)"
-              >编辑</el-button
+            ><el-button link type="primary" @click="edit(s.row)">编辑</el-button
+            ><el-button link type="danger" @click="remove(s.row)"
+              >删除</el-button
             ></template
           ></el-table-column
         ></el-table

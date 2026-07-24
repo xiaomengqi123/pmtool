@@ -4,7 +4,7 @@ import { useRoute } from "vue-router";
 import { api } from "../api";
 import type { GanttTask, Milestone, Project, Task, User } from "../types";
 import { useAuthStore } from "../stores/auth";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const route = useRoute(),
   auth = useAuthStore(),
   project = ref<Project | null>(null),
@@ -85,6 +85,14 @@ async function saveMilestone() {
   await api.saveMilestone(id, milestoneForm);
   milestoneDialog.value = false;
   ElMessage.success("里程碑已保存");
+  load();
+}
+async function removeMilestone(item: Milestone) {
+  await ElMessageBox.confirm(`删除里程碑“${item.name}”？`, "确认删除", {
+    type: "warning",
+  });
+  await api.deleteMilestone(id, item.id);
+  ElMessage.success("里程碑已删除");
   load();
 }
 async function upload(options: any) {
@@ -170,10 +178,12 @@ function canDeleteAttachment(item: any) {
         /><el-table-column prop="status" label="状态" /><el-table-column
           v-if="auth.isManager"
           label="操作"
-          width="80"
+          width="130"
           ><template #default="{ row }"
             ><el-button link type="primary" @click="editMilestone(row)"
               >编辑</el-button
+            ><el-button link type="danger" @click="removeMilestone(row)"
+              >删除</el-button
             ></template
           ></el-table-column
         ></el-table
