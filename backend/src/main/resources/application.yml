@@ -33,6 +33,8 @@ pmtool:
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket: ${MINIO_BUCKET:pmtool}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8989}
 management:
   endpoints:
     web:

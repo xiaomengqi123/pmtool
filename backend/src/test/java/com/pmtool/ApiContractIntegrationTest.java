@@ -1,6 +1,7 @@
 package com.pmtool;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -64,6 +65,16 @@ class ApiContractIntegrationTest {
     void protectedEndpointRejectsUnauthenticatedRequest() throws Exception {
         mvc.perform(get("/api/v1/auth/info"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void corsPreflightOnlyAllowsConfiguredFrontendOrigin() throws Exception {
+        mvc.perform(options("/api/v1/auth/login")
+                .header("Origin", "http://localhost:8989")
+                .header("Access-Control-Request-Method", "POST"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8989"))
+            .andExpect(header().string("Access-Control-Expose-Headers", org.hamcrest.Matchers.containsString("X-Trace-Id")));
     }
 
     @Test
