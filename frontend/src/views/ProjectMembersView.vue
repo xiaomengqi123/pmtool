@@ -2,19 +2,25 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../api";
+import type { Project } from "../types";
 import { useAuthStore } from "../stores/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 const route = useRoute(),
   auth = useAuthStore(),
   projectId = computed(() => Number(route.params.id)),
+  project = ref<Project>(),
   members = ref<any[]>([]),
   users = ref<any[]>([]),
   dialog = ref(false),
   form = reactive({ userId: null as number | null, roleCode: "MEMBER" });
+const canManageProject = computed(
+  () => auth.isAdmin || project.value?.managerId === auth.user?.id,
+);
 async function load() {
+  project.value = await api.project(projectId.value);
   [members.value, users.value] = await Promise.all([
     api.projectMembers(projectId.value),
-    auth.isManager ? api.users() : Promise.resolve([]),
+    canManageProject.value ? api.users() : Promise.resolve([]),
   ]);
 }
 onMounted(load);
@@ -46,7 +52,7 @@ async function remove(row: any) {
         <h1 class="page-title">项目成员</h1>
         <p>项目经理和管理员可维护项目成员。</p>
       </div>
-      <el-button v-if="auth.isManager" type="primary" @click="add"
+      <el-button v-if="canManageProject" type="primary" @click="add"
         >添加成员</el-button
       >
     </div>
@@ -62,7 +68,7 @@ async function remove(row: any) {
             ><el-tag v-if="row.isManager" type="success">是</el-tag
             ><span v-else>-</span></template
           ></el-table-column
-        ><el-table-column v-if="auth.isManager" label="操作" width="90"
+        ><el-table-column v-if="canManageProject" label="操作" width="90"
           ><template #default="{ row }"
             ><el-button
               v-if="!row.isManager"

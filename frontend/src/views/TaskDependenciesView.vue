@@ -2,18 +2,27 @@
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { api } from "../api";
-import type { Task } from "../types";
+import type { Project, Task } from "../types";
 import { useAuthStore } from "../stores/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 const route = useRoute(),
   auth = useAuthStore(),
   projectId = computed(() => Number(route.params.id)),
+  project = ref<Project>(),
   tasks = ref<Task[]>([]),
   selectedId = ref<number>(),
   dependencies = ref<number[]>([]),
   newDependency = ref<number>();
+const canManageProject = computed(
+  () => auth.isAdmin || project.value?.managerId === auth.user?.id,
+);
 async function load() {
-  tasks.value = await api.projectTasks(projectId.value);
+  const [projectData, taskData] = await Promise.all([
+    api.project(projectId.value),
+    api.projectTasks(projectId.value),
+  ]);
+  project.value = projectData;
+  tasks.value = taskData;
   if (!selectedId.value && tasks.value.length)
     selectedId.value = tasks.value[0].id;
   await loadDependencies();
@@ -60,7 +69,7 @@ function taskName(id: number) {
               :key="t.id"
               :label="t.title"
               :value="t.id" /></el-select></el-form-item
-        ><template v-if="auth.isManager"
+        ><template v-if="canManageProject"
           ><el-form-item label="前置任务"
             ><el-select v-model="newDependency" filterable
               ><el-option
@@ -80,7 +89,7 @@ function taskName(id: number) {
           label="任务 ID"
           width="120"
         /><el-table-column prop="title" label="前置任务" /><el-table-column
-          v-if="auth.isManager"
+          v-if="canManageProject"
           label="操作"
           width="100"
           ><template #default="{ row }"
