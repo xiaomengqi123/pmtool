@@ -46,10 +46,10 @@ class PmToolServiceTest {
         assertThatThrownBy(() -> service.saveCustomer(new CustomerInput(" ", null, null, null, null), null))
             .isInstanceOf(BusinessException.class)
             .hasMessage("客户名称不能为空");
-        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", " ", null, null, null, null, null), null))
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", " ", null, null, null, null, null, null), null))
             .isInstanceOf(BusinessException.class)
             .hasMessage("项目名称和编码不能为空");
-        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, null, LocalDateTime.of(2026, 7, 2, 0, 0), LocalDateTime.of(2026, 7, 1, 0, 0)), null))
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, null, LocalDateTime.of(2026, 7, 2, 0, 0), LocalDateTime.of(2026, 7, 1, 0, 0), null), null))
             .isInstanceOf(BusinessException.class)
             .hasMessage("项目开始时间不能晚于结束时间");
     }
@@ -244,7 +244,7 @@ class PmToolServiceTest {
         PmToolService service = service();
         authenticate(1L, "PM");
 
-        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, "archived", null, null), null))
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, "archived", null, null, null), null))
             .isInstanceOf(BusinessException.class)
             .hasMessage("项目状态无效");
 

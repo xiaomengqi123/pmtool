@@ -203,6 +203,32 @@ class ApiContractIntegrationTest {
         org.assertj.core.api.Assertions.assertThat(readId(resubmitted, "$.data.id")).isEqualTo(workLogId);
     }
 
+    @Test
+    void projectUpdateRejectsStaleVersion() throws Exception {
+        String adminToken = login("test-admin", "test-password-123");
+        MvcResult created = mvc.perform(post("/api/v1/projects")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"并发项目\",\"code\":\"VERSION-001\",\"status\":\"planning\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        Long projectId = readId(created, "$.data.id");
+        Number version = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.data.version");
+        String payload = "{\"name\":\"并发项目已更新\",\"code\":\"VERSION-001\",\"status\":\"in_progress\",\"version\":" + version.longValue() + "}";
+
+        mvc.perform(put("/api/v1/projects/" + projectId)
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+            .andExpect(status().isOk());
+        mvc.perform(put("/api/v1/projects/" + projectId)
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value(40900));
+    }
+
     private String login(String username, String password) throws Exception {
         MvcResult login = mvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)

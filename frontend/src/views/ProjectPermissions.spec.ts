@@ -9,6 +9,7 @@ import WorkLogView from "./WorkLogView.vue";
 
 const api = vi.hoisted(() => ({
   projects: vi.fn(),
+  saveProject: vi.fn(),
   project: vi.fn(),
   projectTasks: vi.fn(),
   projectMembers: vi.fn(),
@@ -164,6 +165,34 @@ describe("project permission entries", () => {
     expect((project.vm as any).canManageProject({ managerId: 1 })).toBe(true);
     expect(buttons(detail, "推进")).toHaveLength(2);
     expect(api.projectMembers).toHaveBeenCalledWith(1);
+  });
+
+  it("keeps the project version when a manager edits a project", async () => {
+    useAuthStore().user = {
+      id: 1,
+      username: "manager",
+      displayName: "经理",
+      roleCode: "PM",
+      departmentId: 0,
+      enabled: true,
+    };
+    api.saveProject.mockResolvedValue({});
+    const project = mount(ProjectView, { global: { stubs } });
+    await flushPromises();
+
+    (project.vm as any).edit({
+      id: 1,
+      name: "项目 A",
+      code: "A-1",
+      status: "planning",
+      description: "说明",
+      version: 3,
+    });
+    await (project.vm as any).save();
+
+    expect(api.saveProject).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, version: 3 }),
+    );
   });
 
   it("does not expose another project manager's controls to a PM member", async () => {
