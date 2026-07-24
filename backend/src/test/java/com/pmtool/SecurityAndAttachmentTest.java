@@ -27,4 +27,9 @@ class SecurityAndAttachmentTest {
         MockMultipartFile oversized = new MockMultipartFile("file", "large.bin", "application/octet-stream", new byte[2 * 1024 * 1024 + 1]);
         assertThatThrownBy(() -> attachments.upload("project", 1L, oversized)).isInstanceOf(BusinessException.class).hasMessageContaining("2 MB");
     }
+
+    @Test void attachmentDownloadFileNameRemovesHeaderControlCharacters() {
+        assertThat(AttachmentController.safeFileName("report\r\n\".txt")).isEqualTo("report.txt");
+        assertThat(AttachmentController.safeFileName(null)).isEqualTo("file");
+    }
 }
