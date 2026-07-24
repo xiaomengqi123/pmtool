@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "../stores/auth";
 import ProjectDetailView from "./ProjectDetailView.vue";
 import ProjectView from "./ProjectView.vue";
+import TaskView from "./TaskView.vue";
 
 const api = vi.hoisted(() => ({
   projects: vi.fn(),
   project: vi.fn(),
   projectTasks: vi.fn(),
+  tasks: vi.fn(),
   users: vi.fn(),
   milestones: vi.fn(),
   gantt: vi.fn(),
@@ -82,6 +84,30 @@ describe("project permission entries", () => {
         version: 1,
       },
     ]);
+    api.tasks.mockResolvedValue({
+      items: [
+        {
+          id: 11,
+          projectId: 1,
+          title: "我的任务",
+          assigneeId: 2,
+          status: "todo",
+          priority: "medium",
+          progress: 0,
+          version: 1,
+        },
+        {
+          id: 12,
+          projectId: 1,
+          title: "他人任务",
+          assigneeId: 3,
+          status: "todo",
+          priority: "medium",
+          progress: 0,
+          version: 1,
+        },
+      ],
+    });
     api.users.mockResolvedValue([]);
     api.milestones.mockResolvedValue([]);
     api.gantt.mockResolvedValue([]);
@@ -122,5 +148,25 @@ describe("project permission entries", () => {
 
     expect(buttons(project, "编辑")).toHaveLength(1);
     expect(buttons(detail, "推进")).toHaveLength(2);
+  });
+
+  it("only allows a member to save their own task from the global task list", async () => {
+    useAuthStore().user = {
+      id: 2,
+      username: "member",
+      displayName: "成员",
+      roleCode: "MEMBER",
+      departmentId: 0,
+      enabled: true,
+    };
+    const task = mount(TaskView, { global: { stubs } });
+    await flushPromises();
+
+    (task.vm as any).edit({ assigneeId: 3 });
+    await task.vm.$nextTick();
+    expect(buttons(task, "保存")).toHaveLength(0);
+    (task.vm as any).edit({ assigneeId: 2 });
+    await task.vm.$nextTick();
+    expect(buttons(task, "保存")).toHaveLength(1);
   });
 });

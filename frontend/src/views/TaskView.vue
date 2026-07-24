@@ -23,6 +23,9 @@ function edit(task: Task) {
   Object.assign(form, task);
   dialog.value = true;
 }
+function canUpdateTask(task: Partial<Task>) {
+  return auth.isManager || task.assigneeId === auth.user?.id;
+}
 async function save() {
   await api.saveTask(form);
   dialog.value = false;
@@ -152,6 +155,7 @@ async function remove(task: Task) {
             :disabled="!auth.isManager" /></el-form-item
         ><el-form-item label="状态"
           ><el-select v-model="form.status"
+            :disabled="!canUpdateTask(form)"
             ><el-option label="待处理" value="todo" /><el-option
               label="进行中"
               value="in_progress" /><el-option
@@ -160,10 +164,14 @@ async function remove(task: Task) {
               label="已完成"
               value="done" /></el-select></el-form-item
         ><el-form-item label="进度"
-          ><el-slider v-model="form.progress" /></el-form-item></el-form
+          ><el-slider
+            v-model="form.progress"
+            :disabled="!canUpdateTask(form)" /></el-form-item></el-form
       ><template #footer
         ><el-button @click="dialog = false">取消</el-button
-        ><el-button type="primary" @click="save">保存</el-button></template
+        ><el-button v-if="canUpdateTask(form)" type="primary" @click="save"
+          >保存</el-button
+        ></template
       ></el-dialog
     >
   </div>
