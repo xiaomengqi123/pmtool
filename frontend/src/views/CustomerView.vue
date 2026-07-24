@@ -4,6 +4,11 @@ import { api } from "../api";
 import type { Customer } from "../types";
 import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<Customer[]>([]),
+  keyword = ref(""),
+  status = ref(""),
+  page = ref(1),
+  total = ref(0),
+  pageSize = 20,
   dialog = ref(false),
   detailDialog = ref(false),
   contactDialog = ref(false),
@@ -26,7 +31,16 @@ const rows = ref<Customer[]>([]),
   }),
   followUpForm = reactive<any>({ content: "", followUpAt: "" });
 async function load() {
-  rows.value = (await api.customers()).items;
+  const result = await api.customers(page.value, pageSize, {
+    keyword: keyword.value,
+    status: status.value,
+  });
+  rows.value = result.items;
+  total.value = result.total;
+}
+function search() {
+  page.value = 1;
+  load();
 }
 onMounted(load);
 function edit(row?: Customer) {
@@ -111,6 +125,19 @@ async function saveFollowUp() {
       <el-button type="primary" @click="edit()">新增客户</el-button>
     </div>
     <section class="card">
+      <div class="toolbar">
+        <el-input
+          v-model="keyword"
+          clearable
+          placeholder="搜索客户名称"
+          style="width: 220px"
+          @keyup.enter="search" />
+        <el-select v-model="status" clearable placeholder="客户状态" style="width: 150px">
+          <el-option label="正常" value="active" />
+          <el-option label="停用" value="inactive" />
+        </el-select>
+        <el-button @click="search">查询</el-button>
+      </div>
       <el-table :data="rows"
         ><el-table-column prop="name" label="客户名称" /><el-table-column
           prop="level"
@@ -129,6 +156,13 @@ async function saveFollowUp() {
           ></el-table-column
         ></el-table
       >
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="total, prev, pager, next"
+        @current-change="load" />
     </section>
     <el-dialog v-model="dialog" title="客户"
       ><el-form label-width="80"
@@ -233,6 +267,9 @@ async function saveFollowUp() {
 </template>
 <style scoped>
 .toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
   margin-bottom: 12px;
 }
 </style>

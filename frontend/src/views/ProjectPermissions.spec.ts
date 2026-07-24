@@ -44,6 +44,7 @@ const stubs = {
   "el-input-number": true,
   "el-slider": true,
   "el-date-picker": true,
+  "el-pagination": true,
 };
 
 function buttons(wrapper: ReturnType<typeof mount>, label: string) {

@@ -50,4 +50,27 @@ class ApiContractIntegrationTest {
             .andExpect(jsonPath("$.openapi").isString())
             .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post").exists());
     }
+
+    @Test
+    void coreListEndpointsAcceptFilterAndPaginationParameters() throws Exception {
+        MvcResult login = mvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"test-admin\",\"password\":\"test-password-123\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        String token = com.jayway.jsonpath.JsonPath.read(login.getResponse().getContentAsString(), "$.data.token");
+
+        for (String endpoint : new String[] { "/api/v1/customers", "/api/v1/projects", "/api/v1/tasks" }) {
+            mvc.perform(get(endpoint)
+                    .param("page", "1")
+                    .param("pageSize", "20")
+                    .param("keyword", "none")
+                    .param("status", "planning")
+                    .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.items").isArray())
+                .andExpect(jsonPath("$.data.page").value(1));
+        }
+    }
 }

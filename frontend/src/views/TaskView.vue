@@ -6,6 +6,11 @@ import type { Task, User } from "../types";
 import { useAuthStore } from "../stores/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<Task[]>([]),
+  keyword = ref(""),
+  statusFilter = ref(""),
+  page = ref(1),
+  total = ref(0),
+  pageSize = 20,
   users = ref<User[]>([]),
   selected = ref<Task[]>([]),
   bulkStatus = ref(""),
@@ -14,9 +19,20 @@ const rows = ref<Task[]>([]),
   dialog = ref(false),
   form = reactive<Partial<Task>>({});
 async function load() {
-  const [taskPage, allUsers] = await Promise.all([api.tasks(), api.users()]);
+  const [taskPage, allUsers] = await Promise.all([
+    api.tasks(page.value, pageSize, {
+      keyword: keyword.value,
+      status: statusFilter.value,
+    }),
+    api.users(),
+  ]);
   rows.value = taskPage.items;
   users.value = allUsers;
+  total.value = taskPage.total;
+}
+function search() {
+  page.value = 1;
+  load();
 }
 onMounted(load);
 function edit(task: Task) {
@@ -59,6 +75,21 @@ async function remove(task: Task) {
   <div class="page">
     <div class="page-header"><h1 class="page-title">任务管理</h1></div>
     <section class="card">
+      <div class="toolbar">
+        <el-input
+          v-model="keyword"
+          clearable
+          placeholder="搜索任务标题或描述"
+          style="width: 240px"
+          @keyup.enter="search" />
+        <el-select v-model="statusFilter" clearable placeholder="任务状态" style="width: 150px">
+          <el-option label="待处理" value="todo" />
+          <el-option label="进行中" value="in_progress" />
+          <el-option label="待验收" value="review" />
+          <el-option label="已完成" value="done" />
+        </el-select>
+        <el-button @click="search">查询</el-button>
+      </div>
       <div v-if="auth.isManager" class="bulk">
         <span>已选 {{ selected.length }} 项</span
         ><el-select
@@ -111,6 +142,13 @@ async function remove(task: Task) {
           ></el-table-column
         ></el-table
       >
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="total, prev, pager, next"
+        @current-change="load" />
     </section>
     <el-dialog v-model="dialog" title="任务详情" width="600"
       ><el-form label-width="90"
@@ -178,6 +216,12 @@ async function remove(task: Task) {
 </template>
 <style scoped>
 .bulk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.toolbar {
   display: flex;
   align-items: center;
   gap: 10px;

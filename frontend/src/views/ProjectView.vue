@@ -6,6 +6,11 @@ import type { Project } from "../types";
 import { useAuthStore } from "../stores/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<Project[]>([]),
+  keyword = ref(""),
+  status = ref(""),
+  page = ref(1),
+  total = ref(0),
+  pageSize = 20,
   dialog = ref(false),
   router = useRouter(),
   auth = useAuthStore(),
@@ -16,7 +21,16 @@ const rows = ref<Project[]>([]),
     description: "",
   });
 async function load() {
-  rows.value = (await api.projects()).items;
+  const result = await api.projects(page.value, pageSize, {
+    keyword: keyword.value,
+    status: status.value,
+  });
+  rows.value = result.items;
+  total.value = result.total;
+}
+function search() {
+  page.value = 1;
+  load();
 }
 onMounted(load);
 function edit(row?: Project) {
@@ -58,6 +72,22 @@ async function remove(row: Project) {
       >
     </div>
     <section class="card">
+      <div class="toolbar">
+        <el-input
+          v-model="keyword"
+          clearable
+          placeholder="搜索项目名称或编码"
+          style="width: 240px"
+          @keyup.enter="search" />
+        <el-select v-model="status" clearable placeholder="项目状态" style="width: 150px">
+          <el-option label="规划中" value="planning" />
+          <el-option label="进行中" value="in_progress" />
+          <el-option label="暂停" value="paused" />
+          <el-option label="完成" value="completed" />
+          <el-option label="已取消" value="cancelled" />
+        </el-select>
+        <el-button @click="search">查询</el-button>
+      </div>
       <el-table
         :data="rows"
         @row-click="(r: Project) => router.push(`/projects/${r.id}`)"
@@ -81,6 +111,13 @@ async function remove(row: Project) {
           ></el-table-column
         ></el-table
       >
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="total, prev, pager, next"
+        @current-change="load" />
     </section>
     <el-dialog v-model="dialog" title="项目"
       ><el-form label-width="90"
@@ -110,3 +147,11 @@ async function remove(row: Project) {
     >
   </div>
 </template>
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+</style>

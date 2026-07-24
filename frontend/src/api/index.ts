@@ -38,9 +38,9 @@ export const api = {
     unwrap<PageResult<any>>(
       http.get("/operation-logs", { params: { page, pageSize } }),
     ),
-  customers: (page = 1, pageSize = 20) =>
+  customers: (page = 1, pageSize = 20, filters: Record<string, unknown> = {}) =>
     unwrap<PageResult<Customer>>(
-      http.get("/customers", { params: { page, pageSize } }),
+      http.get("/customers", { params: { page, pageSize, ...filters } }),
     ),
   saveCustomer: (data: Partial<Customer>) =>
     data.id
@@ -59,9 +59,9 @@ export const api = {
     unwrap<any[]>(http.get(`/customers/${customerId}/follow-ups`)),
   saveFollowUp: (customerId: number, data: any) =>
     unwrap(http.post(`/customers/${customerId}/follow-ups`, data)),
-  projects: (page = 1, pageSize = 20) =>
+  projects: (page = 1, pageSize = 20, filters: Record<string, unknown> = {}) =>
     unwrap<PageResult<Project>>(
-      http.get("/projects", { params: { page, pageSize } }),
+      http.get("/projects", { params: { page, pageSize, ...filters } }),
     ),
   project: (id: number) => unwrap<Project>(http.get(`/projects/${id}`)),
   saveProject: (data: Partial<Project>) =>
@@ -129,9 +129,9 @@ export const api = {
       .then((response) => response.data as Blob),
   projectTasks: (id: number) =>
     unwrap<Task[]>(http.get(`/projects/${id}/tasks`)),
-  tasks: (page = 1, pageSize = 20) =>
+  tasks: (page = 1, pageSize = 20, filters: Record<string, unknown> = {}) =>
     unwrap<PageResult<Task>>(
-      http.get("/tasks", { params: { page, pageSize } }),
+      http.get("/tasks", { params: { page, pageSize, ...filters } }),
     ),
   saveTask: (data: Partial<Task>) =>
     data.id
