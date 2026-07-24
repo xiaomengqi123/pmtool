@@ -168,5 +168,5 @@ class OperationLog {
     @Column(nullable=false) String action; @Column(name="resource_type",nullable=false) String resourceType; @Column(name="resource_id") Long resourceId; String detail; @Column(name="trace_id") String traceId;
     @Column(name="created_at",nullable=false) LocalDateTime createdAt=LocalDateTime.now();
     protected OperationLog() {}
-    OperationLog(Long userId,String action,String resourceType,Long resourceId,String detail){this.userId=userId;this.action=action;this.resourceType=resourceType;this.resourceId=resourceId;this.detail=detail;}
+    OperationLog(Long userId,String action,String resourceType,Long resourceId,String detail,String traceId){this.userId=userId;this.action=action;this.resourceType=resourceType;this.resourceId=resourceId;this.detail=detail;this.traceId=traceId;}
 }

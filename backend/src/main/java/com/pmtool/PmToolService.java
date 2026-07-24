@@ -34,9 +34,9 @@ class PmToolService {
     UserAccount user(Long id){return users.findById(id).filter(x->!x.deleted).orElseThrow(()->fail(40400,HttpStatus.NOT_FOUND,"用户不存在"));}
     Project project(Long id){return projects.findById(id).filter(x->!x.deleted).orElseThrow(()->fail(40400,HttpStatus.NOT_FOUND,"项目不存在"));}
     TaskItem task(Long id){return tasks.findById(id).filter(x->!x.deleted).orElseThrow(()->fail(40400,HttpStatus.NOT_FOUND,"任务不存在"));}
-    void log(String action,String type,Long id,String detail){operationLogs.save(new OperationLog(current().id(),action,type,id,detail));}
+    void log(String action,String type,Long id,String detail){operationLogs.save(new OperationLog(current().id(),action,type,id,detail,TraceIdFilter.current()));}
     Map<String,Object> login(LoginRequest req){ UserAccount u=users.findByUsernameAndDeletedFalse(req.username()).orElseThrow(()->fail(40100,HttpStatus.UNAUTHORIZED,"用户名或密码错误")); if(!u.enabled||!encoder.matches(req.password(),u.passwordHash))throw fail(40100,HttpStatus.UNAUTHORIZED,"用户名或密码错误"); logFor(u.id,"LOGIN","USER",u.id,"登录"); return Map.of("token",jwt.create(u),"user",userView(u)); }
-    void logFor(Long uid,String action,String type,Long id,String d){ operationLogs.save(new OperationLog(uid,action,type,id,d)); }
+    void logFor(Long uid,String action,String type,Long id,String d){ operationLogs.save(new OperationLog(uid,action,type,id,d,TraceIdFilter.current())); }
     Map<String,Object> me(){return userView(user(current().id()));}
     void changePassword(PasswordRequest req){UserAccount u=user(current().id());if(!encoder.matches(req.oldPassword(),u.passwordHash))throw fail(40001,HttpStatus.BAD_REQUEST,"旧密码错误");if(req.newPassword()==null||req.newPassword().length()<8)throw fail(40001,HttpStatus.BAD_REQUEST,"新密码至少 8 位");u.passwordHash=encoder.encode(req.newPassword());users.save(u);log("UPDATE","USER",u.id,"修改密码");}
     List<Map<String,Object>> allUsers(){requireManager();return users.findByDeletedFalse(org.springframework.data.domain.Pageable.unpaged()).stream().map(this::userView).toList();}

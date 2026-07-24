@@ -38,3 +38,6 @@ management:
     web:
       exposure:
         include: health,info
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-system}] %logger{36} - %msg%n"

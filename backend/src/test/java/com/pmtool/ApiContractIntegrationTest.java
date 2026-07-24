@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,23 @@ class ApiContractIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(0))
             .andExpect(jsonPath("$.data.username").value("test-admin"));
+    }
+
+    @Test
+    void traceIdIsReturnedAndStoredWithTheAuditLog() throws Exception {
+        String traceId = "audit-trace-123";
+        MvcResult login = mvc.perform(post("/api/v1/auth/login")
+                .header("X-Trace-Id", traceId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"test-admin\",\"password\":\"test-password-123\"}"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-Trace-Id", traceId))
+            .andReturn();
+        String token = com.jayway.jsonpath.JsonPath.read(login.getResponse().getContentAsString(), "$.data.token");
+
+        mvc.perform(get("/api/v1/operation-logs").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[?(@.traceId == 'audit-trace-123')]").isNotEmpty());
     }
 
     @Test
