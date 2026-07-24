@@ -9,6 +9,7 @@
 | 前端单元测试 | 通过 | `npm test`：Vitest 3/3 通过，覆盖工作台与项目角色入口。 |
 | 前端类型检查与构建 | 通过 | `npm run build`：`vue-tsc -b` 与 Vite 构建通过。 |
 | 后端单元/上下文/安全测试 | 通过 | `mvn test`：9/9 通过，含用户角色、成员任务范围、登录/JWT 与 OpenAPI 契约回归。 |
+| 后端可发布包 | 通过 | `mvn package` 已生成 `backend/target/pmtool-1.0.0.jar`。 |
 
 ## 功能核验
 
