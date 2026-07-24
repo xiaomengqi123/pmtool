@@ -41,13 +41,17 @@ class JwtService {
 
 @Component
 class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwt; JwtAuthenticationFilter(JwtService jwt) { this.jwt=jwt; }
+    private final JwtService jwt; private final UserRepository users;
+    JwtAuthenticationFilter(JwtService jwt,UserRepository users) { this.jwt=jwt;this.users=users; }
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String h=request.getHeader(HttpHeaders.AUTHORIZATION);
         if (h!=null && h.startsWith("Bearer ")) try {
-            CurrentUser u=jwt.parse(h.substring(7));
-            var auth=new UsernamePasswordAuthenticationToken(u,null,List.of(new SimpleGrantedAuthority("ROLE_"+u.role())));
-            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+            CurrentUser tokenUser=jwt.parse(h.substring(7));
+            users.findById(tokenUser.id()).filter(user->!user.deleted&&user.enabled).ifPresent(user->{
+                CurrentUser u=new CurrentUser(user.id,user.username,user.roleCode);
+                var auth=new UsernamePasswordAuthenticationToken(u,null,List.of(new SimpleGrantedAuthority("ROLE_"+u.role())));
+                org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+            });
         } catch (Exception ignored) { }
         chain.doFilter(request,response);
     }
@@ -62,4 +66,3 @@ class SecurityConfig {
             .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class).build();
     }
 }
-

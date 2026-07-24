@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.MvcResult;
 @AutoConfigureMockMvc
 class ApiContractIntegrationTest {
     @Autowired MockMvc mvc;
+    @Autowired UserRepository users;
+    @Autowired JwtService jwt;
 
     @Test
     void loginReturnsStandardResponseAndJwtCanReadCurrentUser() throws Exception {
@@ -40,6 +42,16 @@ class ApiContractIntegrationTest {
     @Test
     void protectedEndpointRejectsUnauthenticatedRequest() throws Exception {
         mvc.perform(get("/api/v1/auth/info"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void disabledUsersTokenCannotAccessProtectedEndpoint() throws Exception {
+        UserAccount disabled = new UserAccount("disabled-user", "hash", "已停用用户", "MEMBER");
+        disabled.enabled = false;
+        users.save(disabled);
+
+        mvc.perform(get("/api/v1/auth/info").header("Authorization", "Bearer " + jwt.create(disabled)))
             .andExpect(status().isForbidden());
     }
 
