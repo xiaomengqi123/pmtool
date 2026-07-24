@@ -114,6 +114,7 @@ jobs:
             set -eu
             package_dir=/tmp/pmtool-release-${{ github.run_id }}
             trap 'rm -rf "$package_dir"' EXIT
+            tar -xzf "$package_dir/pmtool-release.tar.gz" -C "$package_dir"
             "$package_dir/deploy/release.sh" "$package_dir/pmtool-release.tar.gz" "${{ github.sha }}"
 
   rollback:
