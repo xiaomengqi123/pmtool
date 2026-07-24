@@ -3,13 +3,14 @@ package com.pmtool;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 interface UserRepository extends JpaRepository<UserAccount, Long> { Optional<UserAccount> findByUsernameAndDeletedFalse(String username); Page<UserAccount> findByDeletedFalse(Pageable pageable); }
 interface DepartmentRepository extends JpaRepository<Department, Long> { List<Department> findByDeletedFalseOrderByNameAsc(); }
-interface RoleRepository extends JpaRepository<Role, Long> { List<Role> findAllByOrderByIdAsc(); }
+interface RoleRepository extends JpaRepository<Role, Long> { List<Role> findAllByOrderByIdAsc(); @Query(value="select p.code from permissions p join role_permissions rp on p.id=rp.permission_id where rp.role_id=?1 order by p.code",nativeQuery=true) List<String> findPermissionCodes(Long roleId); }
 interface CustomerRepository extends JpaRepository<Customer, Long> { Page<Customer> findByDeletedFalse(Pageable pageable); }
 interface CustomerContactRepository extends JpaRepository<CustomerContact, Long> { List<CustomerContact> findByCustomerIdAndDeletedFalse(Long customerId); }
 interface CustomerFollowUpRepository extends JpaRepository<CustomerFollowUp, Long> { List<CustomerFollowUp> findByCustomerIdAndDeletedFalseOrderByFollowUpAtDesc(Long customerId); }
