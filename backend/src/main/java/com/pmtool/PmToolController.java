@@ -63,6 +63,7 @@ public class PmToolController {
     @GetMapping("/notifications") ApiResponse<?> notifications(){return ApiResponse.ok(notifications.findByUserIdOrderByCreatedAtDesc(service.current().id()).stream().map(n->Map.of("id",n.id,"title",n.title,"content",n.content,"type",n.type,"read",n.read,"createdAt",n.createdAt)).toList());}
     @GetMapping("/notifications/unread-count") ApiResponse<?> unread(){return ApiResponse.ok(Map.of("count",notifications.countByUserIdAndReadFalse(service.current().id())));}
     @PostMapping("/notifications/{id}/read") ApiResponse<Void> read(@PathVariable Long id){NotificationItem n=notifications.findById(id).orElseThrow(()->service.fail(40400,HttpStatus.NOT_FOUND,"通知不存在"));if(!Objects.equals(n.userId,service.current().id()))throw service.fail(40300,HttpStatus.FORBIDDEN,"无权限");n.read=true;notifications.save(n);return ApiResponse.ok(null);}
+    @PostMapping("/notifications/read-all") ApiResponse<Void> readAll(){Long userId=service.current().id();notifications.findByUserIdOrderByCreatedAtDesc(userId).stream().filter(n->!n.read).forEach(n->{n.read=true;notifications.save(n);});return ApiResponse.ok(null);}
     @GetMapping("/dashboard") ApiResponse<?> dashboard(){return ApiResponse.ok(service.dashboard());}
 
     private <T> Map<String,Object> page(org.springframework.data.domain.Page<T> p){return Map.of("items",p.getContent(),"total",p.getTotalElements(),"page",p.getNumber()+1,"pageSize",p.getSize());}
