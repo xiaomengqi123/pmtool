@@ -138,6 +138,39 @@ class PmToolServiceTest {
             .hasMessage("任务状态无效");
     }
 
+    @Test
+    void projectManagerCannotReviewWorkLogFromAnotherProject() {
+        UserRepository users = mock(UserRepository.class);
+        CustomerRepository customers = mock(CustomerRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        MilestoneRepository milestones = mock(MilestoneRepository.class);
+        TaskRepository tasks = mock(TaskRepository.class);
+        TaskDependencyRepository dependencies = mock(TaskDependencyRepository.class);
+        WorkLogRepository logs = mock(WorkLogRepository.class);
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        OperationLogRepository operationLogs = mock(OperationLogRepository.class);
+        PmToolService service = new PmToolService(users, customers, projects, members, milestones, tasks, dependencies, logs, notifications, operationLogs, mock(PasswordEncoder.class), mock(JwtService.class));
+        WorkLog workLog = new WorkLog();
+        workLog.id = 30L;
+        workLog.taskId = 20L;
+        TaskItem task = new TaskItem();
+        task.id = 20L;
+        task.projectId = 10L;
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        when(logs.findById(30L)).thenReturn(Optional.of(workLog));
+        when(tasks.findById(20L)).thenReturn(Optional.of(task));
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        authenticate(2L, "PM");
+
+        assertThatThrownBy(() -> service.reviewWorkLog(30L, true, null))
+            .isInstanceOf(BusinessException.class)
+            .extracting(error -> ((BusinessException) error).status)
+            .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
     private PmToolService service() {
         UserRepository users = mock(UserRepository.class);
         when(users.findByUsernameAndDeletedFalse(any())).thenReturn(Optional.empty());

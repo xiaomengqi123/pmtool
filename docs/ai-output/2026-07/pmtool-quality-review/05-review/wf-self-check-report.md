@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 前端单元测试 | 通过 | `npm test`：Vitest 4/4 通过，覆盖工作台与项目、任务角色入口。 |
 | 前端类型检查与构建 | 通过 | `npm run build`：`vue-tsc -b` 与 Vite 构建通过。 |
-| 后端单元/上下文/安全测试 | 通过 | `mvn test`：11/11 通过，含用户角色、成员任务范围、任务软删除、状态枚举、登录/JWT 与 OpenAPI 契约回归。 |
+| 后端单元/上下文/安全测试 | 通过 | `mvn test`：12/12 通过，含用户角色、任务与工时项目范围、任务软删除、状态枚举、登录/JWT 与 OpenAPI 契约回归。 |
 | 后端可发布包 | 通过 | `mvn package` 已生成 `backend/target/pmtool-1.0.0.jar`。 |
 
 ## 功能核验
@@ -22,6 +22,7 @@
 | TC-TASK-01 | 任务乐观锁冲突返回 409 | 通过 | `PmToolService.saveTask`、`updateTaskStatus` 的版本校验。 |
 | TC-ENUM-01 | 项目、任务、里程碑状态与任务优先级均限制为约定枚举 | 通过 | 服务端枚举白名单校验；前端里程碑完成状态统一为 `completed`。 |
 | TC-WORKLOG-01 | 工时提交、审批/驳回、重提和审批后修改重置待审 | 通过 | `PmToolService.saveWorkLog` 与工时页面。 |
+| TC-WORKLOG-02 | 项目经理只能审批自己负责项目的工时 | 通过 | `PmToolService.reviewWorkLog` 按工时所属任务和项目验证项目经理范围。 |
 | TC-ATTACH-01 | 任意类型、单文件最大 2 MB、受控下载和删除 | 通过 | `ObjectStorage.java` 与项目附件页面。 |
 | TC-AUDIT-01 | 操作日志与 180 天清理 | 通过 | `PmToolService.cleanLogs`。 |
 
