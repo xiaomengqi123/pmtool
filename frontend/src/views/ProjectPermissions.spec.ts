@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuthStore } from "../stores/auth";
 import ProjectDetailView from "./ProjectDetailView.vue";
+import ProjectBoardView from "./ProjectBoardView.vue";
 import ProjectView from "./ProjectView.vue";
 import TaskView from "./TaskView.vue";
 import WorkLogView from "./WorkLogView.vue";
@@ -12,6 +13,7 @@ const api = vi.hoisted(() => ({
   saveProject: vi.fn(),
   project: vi.fn(),
   projectTasks: vi.fn(),
+  reorderTasks: vi.fn(),
   projectMembers: vi.fn(),
   tasks: vi.fn(),
   workLogs: vi.fn(),
@@ -258,5 +260,30 @@ describe("project permission entries", () => {
         canManage: true,
       }),
     ).toBe(true);
+  });
+
+  it("submits every task version when a manager reorders the board", async () => {
+    useAuthStore().user = {
+      id: 1,
+      username: "manager",
+      displayName: "项目经理",
+      roleCode: "PM",
+      departmentId: 0,
+      enabled: true,
+    };
+    api.project.mockResolvedValue({ id: 1, managerId: 1, name: "项目 A", code: "A-1" });
+    api.reorderTasks.mockResolvedValue({});
+    const board = mount(ProjectBoardView, { global: { stubs } });
+    await flushPromises();
+
+    await (board.vm as any).move(0, 1);
+
+    expect(api.reorderTasks).toHaveBeenCalledWith(
+      1,
+      expect.arrayContaining([
+        expect.objectContaining({ id: 11, version: 1 }),
+        expect.objectContaining({ id: 12, version: 1 }),
+      ]),
+    );
   });
 });

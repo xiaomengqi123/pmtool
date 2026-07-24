@@ -114,8 +114,15 @@ export const api = {
     unwrap(http.delete(`/tasks/${taskId}/dependencies/${dependsOnTaskId}`)),
   batchTaskStatus: (taskIds: number[], status: string) =>
     unwrap(http.post("/tasks/batch-status", { taskIds, status })),
-  reorderTasks: (projectId: number, taskIds: number[]) =>
-    unwrap(http.post(`/tasks/project/${projectId}/reorder`, { taskIds })),
+  reorderTasks: (
+    projectId: number,
+    tasks: Array<Pick<Task, "id" | "version">>,
+  ) =>
+    unwrap(
+      http.post(`/tasks/project/${projectId}/reorder`, {
+        tasks: tasks.map((task) => ({ taskId: task.id, version: task.version })),
+      }),
+    ),
   attachments: (targetType: string, targetId: number) =>
     unwrap<any[]>(http.get(`/attachments/${targetType}/${targetId}`)),
   uploadAttachment: (targetType: string, targetId: number, file: File) => {

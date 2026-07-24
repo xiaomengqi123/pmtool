@@ -27,11 +27,13 @@ async function move(index: number, delta: number) {
   if (next < 0 || next >= tasks.value.length) return;
   const [task] = tasks.value.splice(index, 1);
   tasks.value.splice(next, 0, task);
-  await api.reorderTasks(
-    projectId.value,
-    tasks.value.map((t) => t.id),
-  );
-  ElMessage.success("排序已更新");
+  try {
+    await api.reorderTasks(projectId.value, tasks.value);
+    ElMessage.success("排序已更新");
+  } catch {
+    await load();
+    ElMessage.warning("排序已被其他用户更新，请基于最新数据重试");
+  }
 }
 </script>
 <template>

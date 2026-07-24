@@ -10,7 +10,8 @@ import java.util.*;
 record LoginBody(@NotBlank String username, @NotBlank String password) {}
 record PasswordBody(@NotBlank String oldPassword, @NotBlank String newPassword) {}
 record StatusBody(@NotBlank String status, Long version) {}
-record ReorderBody(List<Long> taskIds) {}
+record ReorderItem(Long taskId, Long version) {}
+record ReorderBody(List<ReorderItem> tasks) {}
 record DependencyBody(Long dependsOnTaskId) {}
 record MemberBody(Long userId, String roleCode) {}
 record ResetPasswordBody(@NotBlank String password) {}
@@ -53,7 +54,7 @@ public class PmToolController {
     @GetMapping("/tasks/{id}/dependencies") ApiResponse<?> dependencies(@PathVariable Long id){return ApiResponse.ok(service.dependenciesOf(id));}
     @PostMapping("/tasks/{id}/dependencies") ApiResponse<Void> addDependency(@PathVariable Long id,@RequestBody DependencyBody body){if(body.dependsOnTaskId()==null)throw service.fail(40001,HttpStatus.BAD_REQUEST,"依赖任务不能为空");service.addDependency(id,body.dependsOnTaskId());return ApiResponse.ok(null);}
     @DeleteMapping("/tasks/{id}/dependencies/{dependsOnTaskId}") ApiResponse<Void> removeDependency(@PathVariable Long id,@PathVariable Long dependsOnTaskId){service.removeDependency(id,dependsOnTaskId);return ApiResponse.ok(null);}
-    @PostMapping("/tasks/project/{projectId}/reorder") ApiResponse<Void> reorder(@PathVariable Long projectId,@RequestBody ReorderBody body){service.reorder(projectId,body.taskIds());return ApiResponse.ok(null);}
+    @PostMapping("/tasks/project/{projectId}/reorder") ApiResponse<Void> reorder(@PathVariable Long projectId,@RequestBody ReorderBody body){service.reorder(projectId,body.tasks());return ApiResponse.ok(null);}
     @GetMapping("/projects/{id}/gantt") ApiResponse<?> gantt(@PathVariable Long id){return ApiResponse.ok(service.gantt(id));}
 
     @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize,@RequestParam(required=false)String status,@RequestParam(required=false)Long taskId){List<WorkLog> filtered=service.visibleWorkLogs().stream().filter(w->matchesValue(w.status,status)&&(taskId==null||Objects.equals(w.taskId,taskId))).toList();return ApiResponse.ok(page(filtered.stream().map(this::workLogView).toList(),page,pageSize));}

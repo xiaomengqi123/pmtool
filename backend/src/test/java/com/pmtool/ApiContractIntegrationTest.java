@@ -229,6 +229,33 @@ class ApiContractIntegrationTest {
             .andExpect(jsonPath("$.code").value(40900));
     }
 
+    @Test
+    void reorderRejectsStaleTaskVersions() throws Exception {
+        String adminToken = login("test-admin", "test-password-123");
+        MvcResult project = mvc.perform(post("/api/v1/projects")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"排序项目\",\"code\":\"REORDER-001\",\"status\":\"planning\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        Long projectId = readId(project, "$.data.id");
+        Long firstTaskId = createTask(adminToken, projectId, "任务一");
+        Long secondTaskId = createTask(adminToken, projectId, "任务二");
+        String order = "{\"tasks\":[{\"taskId\":" + secondTaskId + ",\"version\":0},{\"taskId\":" + firstTaskId + ",\"version\":0}]}";
+
+        mvc.perform(post("/api/v1/tasks/project/" + projectId + "/reorder")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(order))
+            .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/tasks/project/" + projectId + "/reorder")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(order))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value(40900));
+    }
+
     private String login(String username, String password) throws Exception {
         MvcResult login = mvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -246,6 +273,16 @@ class ApiContractIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
         return readId(user, "$.data.id");
+    }
+
+    private Long createTask(String token, Long projectId, String title) throws Exception {
+        MvcResult task = mvc.perform(post("/api/v1/tasks")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"projectId\":" + projectId + ",\"title\":\"" + title + "\",\"status\":\"todo\",\"priority\":\"medium\",\"progress\":0}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        return readId(task, "$.data.id");
     }
 
     private Long readId(MvcResult result, String path) throws Exception {
