@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -166,6 +167,42 @@ class PmToolServiceTest {
         authenticate(2L, "PM");
 
         assertThatThrownBy(() -> service.reviewWorkLog(30L, true, null))
+            .isInstanceOf(BusinessException.class)
+            .extracting(error -> ((BusinessException) error).status)
+            .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void projectManagerCannotModifyAnotherMembersWorkLogOutsideManagedProject() {
+        UserRepository users = mock(UserRepository.class);
+        CustomerRepository customers = mock(CustomerRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        MilestoneRepository milestones = mock(MilestoneRepository.class);
+        TaskRepository tasks = mock(TaskRepository.class);
+        TaskDependencyRepository dependencies = mock(TaskDependencyRepository.class);
+        WorkLogRepository logs = mock(WorkLogRepository.class);
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        OperationLogRepository operationLogs = mock(OperationLogRepository.class);
+        PmToolService service = new PmToolService(users, customers, projects, members, milestones, tasks, dependencies, logs, notifications, operationLogs, mock(PasswordEncoder.class), mock(JwtService.class));
+        WorkLog workLog = new WorkLog();
+        workLog.id = 30L;
+        workLog.taskId = 20L;
+        workLog.userId = 3L;
+        workLog.status = "pending";
+        TaskItem task = new TaskItem();
+        task.id = 20L;
+        task.projectId = 10L;
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        when(tasks.findById(20L)).thenReturn(Optional.of(task));
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        when(members.existsByIdProjectIdAndIdUserId(10L, 2L)).thenReturn(true);
+        when(logs.findById(30L)).thenReturn(Optional.of(workLog));
+        authenticate(2L, "PM");
+
+        assertThatThrownBy(() -> service.saveWorkLog(new WorkLogInput(20L, BigDecimal.ONE, LocalDate.now(), "修改", null), 30L))
             .isInstanceOf(BusinessException.class)
             .extracting(error -> ((BusinessException) error).status)
             .isEqualTo(HttpStatus.FORBIDDEN);
