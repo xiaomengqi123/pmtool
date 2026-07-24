@@ -1,12 +1,13 @@
 import http from './http'
 import type { AxiosResponse } from 'axios'
-import type { Customer, GanttTask, Milestone, PageResult, Project, Task, User } from '../types'
+import type { Customer, Department, GanttTask, Milestone, PageResult, Project, Role, Task, User } from '../types'
 const unwrap = <T>(request: Promise<AxiosResponse<{ data: T }>>) => request.then(response => response.data.data)
 export const api = {
   login: (username:string,password:string) => unwrap<{token:string;user:User}>(http.post('/auth/login',{username,password})),
   me: () => unwrap<User>(http.get('/auth/info')),
   dashboard: () => unwrap<Record<string, unknown>>(http.get('/dashboard')),
   users: () => unwrap<User[]>(http.get('/users/all')), createUser:(data:Partial<User>&{password:string})=>unwrap(http.post('/users',data)),
+  departments:()=>unwrap<Department[]>(http.get('/departments')), saveDepartment:(data:Partial<Department>)=>data.id?unwrap(http.put(`/departments/${data.id}`,data)):unwrap(http.post('/departments',data)), deleteDepartment:(id:number)=>unwrap(http.delete(`/departments/${id}`)), roles:()=>unwrap<Role[]>(http.get('/roles')),
   customers:(page=1,pageSize=20)=>unwrap<PageResult<Customer>>(http.get('/customers',{params:{page,pageSize}})), saveCustomer:(data:Partial<Customer>)=>data.id?unwrap(http.put(`/customers/${data.id}`,data)):unwrap(http.post('/customers',data)),
   projects:(page=1,pageSize=20)=>unwrap<PageResult<Project>>(http.get('/projects',{params:{page,pageSize}})), project:(id:number)=>unwrap<Project>(http.get(`/projects/${id}`)), saveProject:(data:Partial<Project>)=>data.id?unwrap(http.put(`/projects/${data.id}`,data)):unwrap(http.post('/projects',data)),
   milestones:(projectId:number)=>unwrap<Milestone[]>(http.get(`/projects/${projectId}/milestones`)), saveMilestone:(projectId:number,data:Partial<Milestone>)=>data.id?unwrap(http.put(`/projects/${projectId}/milestones/${data.id}`,data)):unwrap(http.post(`/projects/${projectId}/milestones`,data)),

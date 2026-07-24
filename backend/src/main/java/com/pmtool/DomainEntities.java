@@ -15,6 +15,19 @@ abstract class BaseEntity {
     public Long getId() { return id; }
 }
 
+@Entity @Table(name="departments")
+class Department extends BaseEntity {
+    @Column(nullable=false) String name; @Column(name="parent_id") Long parentId;
+    protected Department() {}
+}
+
+@Entity @Table(name="roles")
+class Role {
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) Long id;
+    @Column(nullable=false,unique=true) String code; @Column(nullable=false) String name; String description;
+    protected Role() {}
+}
+
 @Entity @Table(name = "users")
 class UserAccount extends BaseEntity {
     @Column(nullable = false, unique = true) String username;
