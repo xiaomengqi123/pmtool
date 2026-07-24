@@ -42,4 +42,12 @@ class ApiContractIntegrationTest {
         mvc.perform(get("/api/v1/auth/info"))
             .andExpect(status().isForbidden());
     }
+
+    @Test
+    void openApiDocumentExposesAuthenticationContract() throws Exception {
+        mvc.perform(get("/v3/api-docs"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.openapi").isString())
+            .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post").exists());
+    }
 }
