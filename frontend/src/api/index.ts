@@ -6,7 +6,7 @@ export const api = {
   login: (username:string,password:string) => unwrap<{token:string;user:User}>(http.post('/auth/login',{username,password})),
   me: () => unwrap<User>(http.get('/auth/info')),
   dashboard: () => unwrap<Record<string, unknown>>(http.get('/dashboard')),
-  users: () => unwrap<User[]>(http.get('/users/all')), createUser:(data:Partial<User>&{password:string})=>unwrap(http.post('/users',data)),
+  users: () => unwrap<User[]>(http.get('/users/all')), createUser:(data:Partial<User>&{password:string})=>unwrap(http.post('/users',data)), updateUser:(id:number,data:Partial<User>)=>unwrap(http.put(`/users/${id}`,data)), resetUserPassword:(id:number,password:string)=>unwrap(http.post(`/users/${id}/reset-password`,{password})),
   departments:()=>unwrap<Department[]>(http.get('/departments')), saveDepartment:(data:Partial<Department>)=>data.id?unwrap(http.put(`/departments/${data.id}`,data)):unwrap(http.post('/departments',data)), deleteDepartment:(id:number)=>unwrap(http.delete(`/departments/${id}`)), roles:()=>unwrap<Role[]>(http.get('/roles')),
   operationLogs:(page=1,pageSize=20)=>unwrap<PageResult<any>>(http.get('/operation-logs',{params:{page,pageSize}})),
   customers:(page=1,pageSize=20)=>unwrap<PageResult<Customer>>(http.get('/customers',{params:{page,pageSize}})), saveCustomer:(data:Partial<Customer>)=>data.id?unwrap(http.put(`/customers/${data.id}`,data)):unwrap(http.post('/customers',data)),
