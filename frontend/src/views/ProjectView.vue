@@ -96,7 +96,9 @@ async function remove(row: Project) {
               label="暂停"
               value="paused" /><el-option
               label="完成"
-              value="completed" /></el-select></el-form-item
+              value="completed" /><el-option
+              label="已取消"
+              value="cancelled" /></el-select></el-form-item
         ><el-form-item label="说明"
           ><el-input
             v-model="form.description"

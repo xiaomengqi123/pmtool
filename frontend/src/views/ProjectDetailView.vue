@@ -327,7 +327,7 @@ function canDeleteAttachment(item: any) {
               label="进行中"
               value="in_progress" /><el-option
               label="已完成"
-              value="done" /></el-select></el-form-item></el-form
+              value="completed" /></el-select></el-form-item></el-form
       ><template #footer
         ><el-button @click="milestoneDialog = false">取消</el-button
         ><el-button type="primary" @click="saveMilestone"

@@ -102,6 +102,42 @@ class PmToolServiceTest {
         verify(projects).save(project);
     }
 
+    @Test
+    void managerCannotPersistInvalidProjectOrTaskStatus() {
+        PmToolService service = service();
+        authenticate(1L, "PM");
+
+        assertThatThrownBy(() -> service.saveProject(new ProjectInput("项目", "PM-001", null, null, "archived", null, null), null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("项目状态无效");
+
+        UserRepository users = mock(UserRepository.class);
+        CustomerRepository customers = mock(CustomerRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        ProjectMemberRepository members = mock(ProjectMemberRepository.class);
+        MilestoneRepository milestones = mock(MilestoneRepository.class);
+        TaskRepository tasks = mock(TaskRepository.class);
+        TaskDependencyRepository dependencies = mock(TaskDependencyRepository.class);
+        WorkLogRepository logs = mock(WorkLogRepository.class);
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        OperationLogRepository operationLogs = mock(OperationLogRepository.class);
+        PmToolService taskService = new PmToolService(users, customers, projects, members, milestones, tasks, dependencies, logs, notifications, operationLogs, mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        TaskItem task = new TaskItem();
+        task.id = 20L;
+        task.projectId = 10L;
+        task.progress = BigDecimal.ZERO;
+        when(tasks.findById(20L)).thenReturn(Optional.of(task));
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        authenticate(1L, "PM");
+
+        assertThatThrownBy(() -> taskService.updateTaskStatus(20L, "archived", null))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("任务状态无效");
+    }
+
     private PmToolService service() {
         UserRepository users = mock(UserRepository.class);
         when(users.findByUsernameAndDeletedFalse(any())).thenReturn(Optional.empty());
