@@ -19,6 +19,7 @@ class ApiContractIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired JwtService jwt;
+    @Autowired NotificationRepository notifications;
 
     @Test
     void loginReturnsStandardResponseAndJwtCanReadCurrentUser() throws Exception {
@@ -53,6 +54,21 @@ class ApiContractIntegrationTest {
 
         mvc.perform(get("/api/v1/auth/info").header("Authorization", "Bearer " + jwt.create(disabled)))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void membersCannotReadAuditLogsOrModifyAnotherUsersNotification() throws Exception {
+        UserAccount member = new UserAccount("notification-member", "hash", "成员", "MEMBER");
+        users.save(member);
+        UserAccount other = new UserAccount("notification-owner", "hash", "其他成员", "MEMBER");
+        users.save(other);
+        NotificationItem notification = notifications.save(new NotificationItem(other.id, "测试通知", "内容", "test"));
+        String token = jwt.create(member);
+
+        mvc.perform(get("/api/v1/operation-logs").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/notifications/" + notification.id + "/read").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
     }
 
     @Test
