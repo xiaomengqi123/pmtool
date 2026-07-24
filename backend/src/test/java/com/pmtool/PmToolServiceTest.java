@@ -162,6 +162,30 @@ class PmToolServiceTest {
     }
 
     @Test
+    void projectMembersMustBeActiveAndUseValidProjectRoles() {
+        UserRepository users = mock(UserRepository.class);
+        ProjectRepository projects = mock(ProjectRepository.class);
+        PmToolService service = new PmToolService(users, mock(CustomerRepository.class), projects, mock(ProjectMemberRepository.class), mock(MilestoneRepository.class), mock(TaskRepository.class), mock(TaskDependencyRepository.class), mock(WorkLogRepository.class), mock(NotificationRepository.class), mock(OperationLogRepository.class), mock(PasswordEncoder.class), mock(JwtService.class));
+        Project project = new Project();
+        project.id = 10L;
+        project.managerId = 1L;
+        UserAccount member = new UserAccount("member", "hash", "成员", "MEMBER");
+        member.id = 2L;
+        when(projects.findById(10L)).thenReturn(Optional.of(project));
+        when(users.findById(2L)).thenReturn(Optional.of(member));
+        authenticate(1L, "PM");
+
+        member.enabled = false;
+        assertThatThrownBy(() -> service.addMember(10L, 2L, "MEMBER"))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("用户已停用");
+        member.enabled = true;
+        assertThatThrownBy(() -> service.addMember(10L, 2L, "ADMIN"))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("项目成员角色无效");
+    }
+
+    @Test
     void projectManagerSoftDeletesTaskAndRecalculatesProjectProgress() {
         UserRepository users = mock(UserRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);
