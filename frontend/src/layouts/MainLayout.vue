@@ -31,7 +31,7 @@ function logout() {
       <el-menu
         router
         :default-active="$route.path"
-        background-color="#083c37"
+        background-color="#009982"
         text-color="#d6f2ee"
         active-text-color="#fff"
       >
@@ -81,7 +81,7 @@ function logout() {
 </template>
 <style scoped>
 .aside {
-  background: #083c37;
+  background: #009982;
 }
 .brand {
   height: 64px;
