@@ -13,6 +13,7 @@ interface CustomerContactRepository extends JpaRepository<CustomerContact, Long>
 interface CustomerFollowUpRepository extends JpaRepository<CustomerFollowUp, Long> { List<CustomerFollowUp> findByCustomerIdAndDeletedFalseOrderByFollowUpAtDesc(Long customerId); }
 interface ProjectRepository extends JpaRepository<Project, Long> { Page<Project> findByDeletedFalse(Pageable pageable); List<Project> findByManagerIdAndDeletedFalse(Long managerId); }
 interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> { boolean existsByIdProjectIdAndIdUserId(Long projectId, Long userId); List<ProjectMember> findByIdProjectId(Long projectId); }
+interface MilestoneRepository extends JpaRepository<Milestone, Long> { List<Milestone> findByProjectIdAndDeletedFalseOrderByDueDateAsc(Long projectId); }
 interface TaskRepository extends JpaRepository<TaskItem, Long> { Page<TaskItem> findByDeletedFalse(Pageable pageable); List<TaskItem> findByProjectIdAndDeletedFalseOrderBySortOrderAsc(Long projectId); List<TaskItem> findByProjectIdAndDeletedFalse(Long projectId); }
 interface WorkLogRepository extends JpaRepository<WorkLog, Long> { Page<WorkLog> findByDeletedFalse(Pageable pageable); }
 interface NotificationRepository extends JpaRepository<NotificationItem, Long> { List<NotificationItem> findByUserIdOrderByCreatedAtDesc(Long userId); long countByUserIdAndReadFalse(Long userId); }

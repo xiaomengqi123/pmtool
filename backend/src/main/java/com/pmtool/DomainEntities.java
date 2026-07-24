@@ -62,6 +62,17 @@ class Project extends BaseEntity {
     protected Project() {}
 }
 
+@Entity @Table(name = "milestones")
+class Milestone {
+    @Id @GeneratedValue(strategy=GenerationType.IDENTITY) Long id;
+    @Column(name="project_id",nullable=false) Long projectId;
+    @Column(nullable=false) String name;
+    @Column(name="due_date") LocalDateTime dueDate;
+    @Column(nullable=false) String status="pending";
+    @Column(nullable=false) boolean deleted=false;
+    protected Milestone() {}
+}
+
 @Entity @Table(name = "project_members")
 class ProjectMember {
     @EmbeddedId ProjectMemberId id; @Column(name="role_code", nullable=false) String roleCode="MEMBER";
