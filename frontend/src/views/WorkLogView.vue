@@ -60,8 +60,10 @@ function taskName(id: number) {
   return tasks.value.find((t) => t.id === id)?.title || `任务 #${id}`;
 }
 function canEdit(row: any) {
+  const own = row.userId === auth.user?.id;
   return (
-    row.status === "rejected" || (auth.isManager && row.status === "approved")
+    (own && row.status === "rejected") ||
+    (row.canManage && ["rejected", "approved"].includes(row.status))
   );
 }
 </script>
@@ -115,7 +117,7 @@ function canEdit(row: any) {
               type="primary"
               @click="edit(row)"
               >{{ row.status === "rejected" ? "修改重提" : "修改" }}</el-button
-            ><template v-if="auth.isManager && row.status === 'pending'"
+            ><template v-if="row.canManage && row.status === 'pending'"
               ><el-button link type="success" @click="review(row.id, true)"
                 >通过</el-button
               ><el-button link type="danger" @click="review(row.id, false)"

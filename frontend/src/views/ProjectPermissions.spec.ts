@@ -5,12 +5,14 @@ import { useAuthStore } from "../stores/auth";
 import ProjectDetailView from "./ProjectDetailView.vue";
 import ProjectView from "./ProjectView.vue";
 import TaskView from "./TaskView.vue";
+import WorkLogView from "./WorkLogView.vue";
 
 const api = vi.hoisted(() => ({
   projects: vi.fn(),
   project: vi.fn(),
   projectTasks: vi.fn(),
   tasks: vi.fn(),
+  workLogs: vi.fn(),
   users: vi.fn(),
   milestones: vi.fn(),
   gantt: vi.fn(),
@@ -28,6 +30,7 @@ const stubs = {
   "el-table": { template: "<section><slot /></section>" },
   "el-table-column": { template: '<section><slot :row="{}" /></section>' },
   "el-progress": true,
+  "el-tag": true,
   "el-empty": true,
   "el-upload": { template: "<section><slot /></section>" },
   "el-dialog": {
@@ -108,6 +111,7 @@ describe("project permission entries", () => {
         },
       ],
     });
+    api.workLogs.mockResolvedValue({ items: [] });
     api.users.mockResolvedValue([]);
     api.milestones.mockResolvedValue([]);
     api.gantt.mockResolvedValue([]);
@@ -168,5 +172,33 @@ describe("project permission entries", () => {
     (task.vm as any).edit({ assigneeId: 2 });
     await task.vm.$nextTick();
     expect(buttons(task, "保存")).toHaveLength(1);
+  });
+
+  it("only exposes worklog management actions for the record's project manager", async () => {
+    useAuthStore().user = {
+      id: 2,
+      username: "manager",
+      displayName: "项目经理",
+      roleCode: "PM",
+      departmentId: 0,
+      enabled: true,
+    };
+    const workLog = mount(WorkLogView, { global: { stubs } });
+    await flushPromises();
+
+    expect(
+      (workLog.vm as any).canEdit({
+        userId: 3,
+        status: "approved",
+        canManage: false,
+      }),
+    ).toBe(false);
+    expect(
+      (workLog.vm as any).canEdit({
+        userId: 3,
+        status: "approved",
+        canManage: true,
+      }),
+    ).toBe(true);
   });
 });

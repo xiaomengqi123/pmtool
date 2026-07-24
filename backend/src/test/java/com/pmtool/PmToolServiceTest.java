@@ -166,6 +166,7 @@ class PmToolServiceTest {
         when(projects.findById(10L)).thenReturn(Optional.of(project));
         authenticate(2L, "PM");
 
+        assertThat(service.canManageWorkLog(workLog)).isFalse();
         assertThatThrownBy(() -> service.reviewWorkLog(30L, true, null))
             .isInstanceOf(BusinessException.class)
             .extracting(error -> ((BusinessException) error).status)
