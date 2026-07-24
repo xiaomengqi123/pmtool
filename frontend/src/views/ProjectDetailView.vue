@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import type { GanttTask, Milestone, Project, Task, User } from "../types";
 import { useAuthStore } from "../stores/auth";
 import { ElMessage, ElMessageBox } from "element-plus";
 const route = useRoute(),
+  router = useRouter(),
   auth = useAuthStore(),
   project = ref<Project | null>(null),
   tasks = ref<Task[]>([]),
@@ -123,6 +124,21 @@ function canDeleteAttachment(item: any) {
       </div>
       <el-button v-if="auth.isManager" type="primary" @click="edit()"
         >新增任务</el-button
+      >
+    </div>
+    <div class="project-links">
+      <el-button plain @click="router.push(`/projects/${id}/members`)"
+        >成员管理</el-button
+      ><el-button plain @click="router.push(`/projects/${id}/extras`)"
+        >文档与风险</el-button
+      ><el-button plain @click="router.push(`/projects/${id}/dependencies`)"
+        >任务依赖</el-button
+      ><el-button plain @click="router.push(`/projects/${id}/board`)"
+        >看板排序</el-button
+      ><el-button plain @click="router.push(`/projects/${id}/gantt`)"
+        >甘特视图</el-button
+      ><el-button plain @click="router.push(`/projects/${id}/attachments`)"
+        >附件管理</el-button
       >
     </div>
     <section class="card">
@@ -350,5 +366,10 @@ function canDeleteAttachment(item: any) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.project-links {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 </style>
