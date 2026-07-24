@@ -7,9 +7,18 @@ import { useAuthStore } from "../stores/auth";
 const route = useRoute(),
   auth = useAuthStore(),
   projectId = computed(() => Number(route.params.id)),
+  project = ref<any>(),
   rows = ref<any[]>([]);
+const canManageProject = computed(
+  () => auth.isAdmin || project.value?.managerId === auth.user?.id,
+);
 async function load() {
-  rows.value = await api.attachments("project", projectId.value);
+  const [projectData, attachmentData] = await Promise.all([
+    api.project(projectId.value),
+    api.attachments("project", projectId.value),
+  ]);
+  project.value = projectData;
+  rows.value = attachmentData;
 }
 onMounted(load);
 async function upload(options: any) {
@@ -40,7 +49,7 @@ async function remove(row: any) {
   load();
 }
 function canDelete(row: any) {
-  return auth.isManager || row.uploaderId === auth.user?.id;
+  return canManageProject.value || row.uploaderId === auth.user?.id;
 }
 </script>
 <template>
