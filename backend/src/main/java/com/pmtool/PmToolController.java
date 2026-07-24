@@ -24,7 +24,7 @@ public class PmToolController {
     @GetMapping("/auth/info") ApiResponse<?> info(){return ApiResponse.ok(service.me());}
     @PostMapping("/auth/change-password") ApiResponse<Void> password(@Valid @RequestBody PasswordBody body){service.changePassword(new PasswordRequest(body.oldPassword(),body.newPassword()));return ApiResponse.ok(null);}
 
-    @GetMapping("/users") ApiResponse<?> users(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(users.findByDeletedFalse(PageRequest.of(page-1,pageSize)).map(service::userView)));}
+    @GetMapping("/users") ApiResponse<?> users(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize,@RequestParam(required=false)String keyword,@RequestParam(required=false)String roleCode){service.requireAdmin();List<UserAccount> filtered=users.findByDeletedFalse(org.springframework.data.domain.Pageable.unpaged()).getContent().stream().filter(u->(matchesText(u.username,keyword)||matchesText(u.displayName,keyword))&&matchesValue(u.roleCode,roleCode)).toList();return ApiResponse.ok(page(filtered.stream().map(service::userView).toList(),page,pageSize));}
     @GetMapping("/users/all") ApiResponse<?> allUsers(){return ApiResponse.ok(service.allUsers());}
     @PostMapping("/users") ApiResponse<?> addUser(@RequestBody UserInput body){return ApiResponse.ok(service.userView(service.createUser(body)));}
     @PutMapping("/users/{id}") ApiResponse<?> updateUser(@PathVariable Long id,@RequestBody UserUpdateInput body){return ApiResponse.ok(service.userView(service.updateUser(id,body)));}
@@ -55,7 +55,7 @@ public class PmToolController {
     @PostMapping("/tasks/project/{projectId}/reorder") ApiResponse<Void> reorder(@PathVariable Long projectId,@RequestBody ReorderBody body){service.reorder(projectId,body.taskIds());return ApiResponse.ok(null);}
     @GetMapping("/projects/{id}/gantt") ApiResponse<?> gantt(@PathVariable Long id){return ApiResponse.ok(service.gantt(id));}
 
-    @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize){return ApiResponse.ok(page(service.visibleWorkLogs().stream().map(this::workLogView).toList(),page,pageSize));}
+    @GetMapping("/work-logs") ApiResponse<?> workLogs(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize,@RequestParam(required=false)String status,@RequestParam(required=false)Long taskId){List<WorkLog> filtered=service.visibleWorkLogs().stream().filter(w->matchesValue(w.status,status)&&(taskId==null||Objects.equals(w.taskId,taskId))).toList();return ApiResponse.ok(page(filtered.stream().map(this::workLogView).toList(),page,pageSize));}
     @PostMapping("/work-logs") ApiResponse<?> addWorkLog(@RequestBody WorkLogInput body){return ApiResponse.ok(workLogView(service.saveWorkLog(body,null)));}
     @PutMapping("/work-logs/{id}") ApiResponse<?> updateWorkLog(@PathVariable Long id,@RequestBody WorkLogInput body){return ApiResponse.ok(workLogView(service.saveWorkLog(body,id)));}
     @PostMapping("/work-logs/{id}/approve") ApiResponse<Void> approve(@PathVariable Long id){service.reviewWorkLog(id,true,null);return ApiResponse.ok(null);}

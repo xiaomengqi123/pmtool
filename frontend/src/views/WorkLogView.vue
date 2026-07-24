@@ -7,6 +7,10 @@ import type { Task } from "../types";
 const auth = useAuthStore(),
   rows = ref<any[]>([]),
   tasks = ref<Task[]>([]),
+  statusFilter = ref(""),
+  page = ref(1),
+  total = ref(0),
+  pageSize = 20,
   dialog = ref(false),
   form = reactive<any>({
     taskId: null,
@@ -16,9 +20,17 @@ const auth = useAuthStore(),
     version: null,
   });
 async function load() {
-  const [logs, taskPage] = await Promise.all([api.workLogs(), api.tasks()]);
+  const [logs, taskPage] = await Promise.all([
+    api.workLogs(page.value, pageSize, { status: statusFilter.value }),
+    api.tasks(1, 100),
+  ]);
   rows.value = logs.items;
   tasks.value = taskPage.items;
+  total.value = logs.total;
+}
+function search() {
+  page.value = 1;
+  load();
 }
 onMounted(load);
 function create() {
@@ -79,6 +91,14 @@ function canEdit(row: any) {
       <el-button type="primary" @click="create">登记工时</el-button>
     </div>
     <section class="card">
+      <div class="toolbar">
+        <el-select v-model="statusFilter" clearable placeholder="工时状态" style="width: 150px">
+          <el-option label="待审批" value="pending" />
+          <el-option label="已审批" value="approved" />
+          <el-option label="已驳回" value="rejected" />
+        </el-select>
+        <el-button @click="search">查询</el-button>
+      </div>
       <el-table :data="rows"
         ><el-table-column label="任务" min-width="160"
           ><template #default="{ row }">{{
@@ -127,6 +147,13 @@ function canEdit(row: any) {
           ></el-table-column
         ></el-table
       >
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="total, prev, pager, next"
+        @current-change="load" />
     </section>
     <el-dialog
       v-model="dialog"
@@ -164,3 +191,11 @@ function canEdit(row: any) {
     >
   </div>
 </template>
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+</style>

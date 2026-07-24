@@ -21,6 +21,10 @@ export const api = {
   me: () => unwrap<User>(http.get("/auth/info")),
   dashboard: () => unwrap<Record<string, unknown>>(http.get("/dashboard")),
   users: () => unwrap<User[]>(http.get("/users/all")),
+  userPage: (page = 1, pageSize = 20, filters: Record<string, unknown> = {}) =>
+    unwrap<PageResult<User>>(
+      http.get("/users", { params: { page, pageSize, ...filters } }),
+    ),
   createUser: (data: Partial<User> & { password: string }) =>
     unwrap(http.post("/users", data)),
   updateUser: (id: number, data: Partial<User>) =>
@@ -140,9 +144,9 @@ export const api = {
   deleteTask: (id: number) => unwrap(http.delete(`/tasks/${id}`)),
   status: (id: number, status: string, version: number) =>
     unwrap(http.patch(`/tasks/${id}/status`, { status, version })),
-  workLogs: (page = 1, pageSize = 20) =>
+  workLogs: (page = 1, pageSize = 20, filters: Record<string, unknown> = {}) =>
     unwrap<PageResult<any>>(
-      http.get("/work-logs", { params: { page, pageSize } }),
+      http.get("/work-logs", { params: { page, pageSize, ...filters } }),
     ),
   saveWorkLog: (data: any) =>
     data.id

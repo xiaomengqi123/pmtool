@@ -72,5 +72,20 @@ class ApiContractIntegrationTest {
                 .andExpect(jsonPath("$.data.items").isArray())
                 .andExpect(jsonPath("$.data.page").value(1));
         }
+        mvc.perform(get("/api/v1/users")
+                .param("page", "1")
+                .param("pageSize", "20")
+                .param("keyword", "none")
+                .param("roleCode", "MEMBER")
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items").isArray());
+        mvc.perform(get("/api/v1/work-logs")
+                .param("page", "1")
+                .param("pageSize", "20")
+                .param("status", "pending")
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items").isArray());
     }
 }

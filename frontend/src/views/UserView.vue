@@ -4,6 +4,11 @@ import { api } from "../api";
 import type { User } from "../types";
 import { ElMessage, ElMessageBox } from "element-plus";
 const rows = ref<User[]>([]),
+  keyword = ref(""),
+  roleCode = ref(""),
+  page = ref(1),
+  total = ref(0),
+  pageSize = 20,
   dialog = ref(false),
   form = reactive<any>({
     username: "",
@@ -13,7 +18,16 @@ const rows = ref<User[]>([]),
     enabled: true,
   });
 async function load() {
-  rows.value = await api.users();
+  const result = await api.userPage(page.value, pageSize, {
+    keyword: keyword.value,
+    roleCode: roleCode.value,
+  });
+  rows.value = result.items;
+  total.value = result.total;
+}
+function search() {
+  page.value = 1;
+  load();
 }
 onMounted(load);
 function create() {
@@ -62,6 +76,20 @@ async function reset(row: User) {
       <el-button type="primary" @click="create">新增用户</el-button>
     </div>
     <section class="card">
+      <div class="toolbar">
+        <el-input
+          v-model="keyword"
+          clearable
+          placeholder="搜索账号或姓名"
+          style="width: 220px"
+          @keyup.enter="search" />
+        <el-select v-model="roleCode" clearable placeholder="角色" style="width: 150px">
+          <el-option label="管理员" value="ADMIN" />
+          <el-option label="项目经理" value="PM" />
+          <el-option label="成员" value="MEMBER" />
+        </el-select>
+        <el-button @click="search">查询</el-button>
+      </div>
       <el-table :data="rows"
         ><el-table-column prop="username" label="账号" /><el-table-column
           prop="displayName"
@@ -83,6 +111,13 @@ async function reset(row: User) {
           ></el-table-column
         ></el-table
       >
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="total, prev, pager, next"
+        @current-change="load" />
     </section>
     <el-dialog v-model="dialog" :title="form.id ? '编辑用户' : '新增用户'"
       ><el-form label-width="80"
@@ -113,3 +148,11 @@ async function reset(row: User) {
     >
   </div>
 </template>
+<style scoped>
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+</style>
