@@ -211,6 +211,26 @@ class ApiContractIntegrationTest {
     }
 
     @Test
+    void taskProgressMustStayWithinZeroToOneHundred() throws Exception {
+        String token = login("test-admin", "test-password-123");
+        MvcResult project = mvc.perform(post("/api/v1/projects")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"进度校验项目\",\"code\":\"PROGRESS-VALIDATION-001\",\"status\":\"planning\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+        Long projectId = readId(project, "$.data.id");
+
+        mvc.perform(post("/api/v1/tasks")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"projectId\":" + projectId + ",\"title\":\"非法进度任务\",\"status\":\"todo\",\"priority\":\"medium\",\"progress\":101}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(40001))
+            .andExpect(jsonPath("$.message").value("任务进度必须在 0 到 100 之间"));
+    }
+
+    @Test
     void projectDeliveryFlowCoversRolesTasksAndWorkLogReview() throws Exception {
         String adminToken = login("test-admin", "test-password-123");
         Long managerId = createUser(adminToken, "e2e-manager", "项目经理", "PM");
