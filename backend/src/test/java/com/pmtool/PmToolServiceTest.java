@@ -38,6 +38,23 @@ class PmToolServiceTest {
     }
 
     @Test
+    void administratorCanSoftDeleteAnotherUserButNotThemselves() {
+        UserRepository users = mock(UserRepository.class);
+        UserAccount member = new UserAccount("member", "hash", "成员", "MEMBER");
+        member.id = 2L;
+        when(users.findById(2L)).thenReturn(Optional.of(member));
+        PmToolService service = new PmToolService(users, mock(CustomerRepository.class), mock(ProjectRepository.class), mock(ProjectMemberRepository.class), mock(MilestoneRepository.class), mock(TaskRepository.class), mock(TaskDependencyRepository.class), mock(WorkLogRepository.class), mock(NotificationRepository.class), mock(OperationLogRepository.class), mock(PasswordEncoder.class), mock(JwtService.class));
+        authenticate(1L, "ADMIN");
+
+        service.deleteUser(2L);
+
+        assertThat(member.deleted).isTrue();
+        assertThatThrownBy(() -> service.deleteUser(1L))
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("不能删除当前登录账号");
+    }
+
+    @Test
     void memberCannotUpdateAnotherMembersTask() {
         UserRepository users = mock(UserRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);

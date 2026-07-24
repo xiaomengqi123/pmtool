@@ -29,6 +29,7 @@ public class PmToolController {
     @PostMapping("/users") ApiResponse<?> addUser(@RequestBody UserInput body){return ApiResponse.ok(service.userView(service.createUser(body)));}
     @PutMapping("/users/{id}") ApiResponse<?> updateUser(@PathVariable Long id,@RequestBody UserUpdateInput body){return ApiResponse.ok(service.userView(service.updateUser(id,body)));}
     @PostMapping("/users/{id}/reset-password") ApiResponse<Void> resetPassword(@PathVariable Long id,@Valid @RequestBody ResetPasswordBody body){service.resetPassword(id,body.password());return ApiResponse.ok(null);}
+    @DeleteMapping("/users/{id}") ApiResponse<Void> removeUser(@PathVariable Long id){service.deleteUser(id);return ApiResponse.ok(null);}
 
     @GetMapping("/customers") ApiResponse<?> customers(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int pageSize,@RequestParam(required=false)String keyword,@RequestParam(required=false)String status){service.requireManager();List<Customer> filtered=customers.findByDeletedFalse(org.springframework.data.domain.Pageable.unpaged()).getContent().stream().filter(c->matchesText(c.name,keyword)&&matchesValue(c.status,status)).toList();return ApiResponse.ok(page(filtered.stream().map(this::customerView).toList(),page,pageSize));}
     @PostMapping("/customers") ApiResponse<?> addCustomer(@RequestBody CustomerInput body){return ApiResponse.ok(customerView(service.saveCustomer(body,null)));}

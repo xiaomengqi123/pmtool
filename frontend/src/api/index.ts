@@ -31,6 +31,7 @@ export const api = {
     unwrap(http.put(`/users/${id}`, data)),
   resetUserPassword: (id: number, password: string) =>
     unwrap(http.post(`/users/${id}/reset-password`, { password })),
+  deleteUser: (id: number) => unwrap(http.delete(`/users/${id}`)),
   departments: () => unwrap<Department[]>(http.get("/departments")),
   saveDepartment: (data: Partial<Department>) =>
     data.id

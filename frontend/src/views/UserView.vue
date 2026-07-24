@@ -68,6 +68,16 @@ async function reset(row: User) {
   await api.resetUserPassword(row.id, result.value);
   ElMessage.success("密码已重置");
 }
+async function remove(row: User) {
+  await ElMessageBox.confirm(
+    `删除用户“${row.displayName}”？该用户将不能再登录。`,
+    "确认删除",
+    { type: "warning" },
+  );
+  await api.deleteUser(row.id);
+  ElMessage.success("用户已删除");
+  load();
+}
 </script>
 <template>
   <div class="page">
@@ -102,11 +112,13 @@ async function reset(row: User) {
               row.enabled ? "启用" : "停用"
             }}</el-tag></template
           ></el-table-column
-        ><el-table-column label="操作" width="150"
+        ><el-table-column label="操作" width="200"
           ><template #default="{ row }"
             ><el-button link type="primary" @click="edit(row)">编辑</el-button
             ><el-button link type="warning" @click="reset(row)"
               >重置密码</el-button
+            ><el-button link type="danger" @click="remove(row)"
+              >删除</el-button
             ></template
           ></el-table-column
         ></el-table
