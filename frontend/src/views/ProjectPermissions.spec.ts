@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   projects: vi.fn(),
   project: vi.fn(),
   projectTasks: vi.fn(),
+  projectMembers: vi.fn(),
   tasks: vi.fn(),
   workLogs: vi.fn(),
   users: vi.fn(),
@@ -88,6 +89,7 @@ describe("project permission entries", () => {
         version: 1,
       },
     ]);
+    api.projectMembers.mockResolvedValue([]);
     api.tasks.mockResolvedValue({
       items: [
         {
@@ -153,6 +155,7 @@ describe("project permission entries", () => {
 
     expect(buttons(project, "编辑")).toHaveLength(1);
     expect(buttons(detail, "推进")).toHaveLength(2);
+    expect(api.projectMembers).toHaveBeenCalledWith(1);
   });
 
   it("only allows a member to save their own task from the global task list", async () => {

@@ -33,21 +33,27 @@ function canUpdateTask(task: Pick<Task, "assigneeId">) {
   return auth.isManager || task.assigneeId === auth.user?.id;
 }
 async function load() {
-  [
-    project.value,
-    tasks.value,
-    users.value,
-    milestones.value,
-    gantt.value,
-    attachments.value,
-  ] = await Promise.all([
+  const [projectData, taskData, memberData, milestoneData, ganttData, attachmentData] = await Promise.all([
     api.project(id),
     api.projectTasks(id),
-    auth.isManager ? api.users() : Promise.resolve([]),
+    auth.isManager ? api.projectMembers(id) : Promise.resolve([]),
     api.milestones(id),
     api.gantt(id),
     api.attachments("project", id),
   ]);
+  project.value = projectData;
+  tasks.value = taskData;
+  users.value = memberData.map((member: any) => ({
+    id: member.userId,
+    username: member.username,
+    displayName: member.displayName,
+    roleCode: member.roleCode,
+    departmentId: 0,
+    enabled: true,
+  }));
+  milestones.value = milestoneData;
+  gantt.value = ganttData;
+  attachments.value = attachmentData;
 }
 onMounted(load);
 function edit(t?: Task) {

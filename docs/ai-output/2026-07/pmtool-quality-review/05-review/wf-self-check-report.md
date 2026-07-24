@@ -25,6 +25,7 @@
 | TC-PERM-04 | 成员不能读取全量用户清单 | 通过 | `/users/all` 限制为管理角色，成员端不再请求该接口。 |
 | TC-TASK-01 | 任务乐观锁冲突返回 409 | 通过 | `PmToolService.saveTask`、`updateTaskStatus` 的版本校验。 |
 | TC-TASK-02 | 任务负责人必须属于项目成员或为项目经理 | 通过 | `PmToolService.saveTask` 校验负责人存在并校验项目成员关系。 |
+| TC-TASK-03 | 任务负责人候选项仅展示当前项目成员 | 通过 | 项目详情与全局任务编辑页均调用项目成员接口，不再加载全量用户目录。 |
 | TC-ENUM-01 | 项目、任务、里程碑状态与任务优先级均限制为约定枚举 | 通过 | 服务端枚举白名单校验；前端里程碑完成状态统一为 `completed`。 |
 | TC-WORKLOG-01 | 工时提交、审批/驳回、重提和审批后修改重置待审 | 通过 | `PmToolService.saveWorkLog` 与工时页面。 |
 | TC-WORKLOG-02 | 项目经理只能审批自己负责项目的工时 | 通过 | `PmToolService.reviewWorkLog` 按工时所属任务和项目验证项目经理范围。 |

@@ -11,7 +11,7 @@ const rows = ref<Task[]>([]),
   page = ref(1),
   total = ref(0),
   pageSize = 20,
-  users = ref<User[]>([]),
+  assignees = ref<User[]>([]),
   selected = ref<Task[]>([]),
   bulkStatus = ref(""),
   router = useRouter(),
@@ -19,15 +19,11 @@ const rows = ref<Task[]>([]),
   dialog = ref(false),
   form = reactive<Partial<Task>>({});
 async function load() {
-  const [taskPage, allUsers] = await Promise.all([
-    api.tasks(page.value, pageSize, {
-      keyword: keyword.value,
-      status: statusFilter.value,
-    }),
-    auth.isManager ? api.users() : Promise.resolve([]),
-  ]);
+  const taskPage = await api.tasks(page.value, pageSize, {
+    keyword: keyword.value,
+    status: statusFilter.value,
+  });
   rows.value = taskPage.items;
-  users.value = allUsers;
   total.value = taskPage.total;
 }
 function search() {
@@ -35,9 +31,21 @@ function search() {
   load();
 }
 onMounted(load);
-function edit(task: Task) {
+async function edit(task: Task) {
   Object.assign(form, task);
   dialog.value = true;
+  if (auth.isManager) {
+    assignees.value = (await api.projectMembers(task.projectId)).map(
+      (member: any) => ({
+        id: member.userId,
+        username: member.username,
+        displayName: member.displayName,
+        roleCode: member.roleCode,
+        departmentId: 0,
+        enabled: true,
+      }),
+    );
+  }
 }
 function canUpdateTask(task: Partial<Task>) {
   return auth.isManager || task.assigneeId === auth.user?.id;
@@ -165,7 +173,7 @@ async function remove(task: Task) {
         ><el-form-item label="负责人"
           ><el-select v-model="form.assigneeId" :disabled="!auth.isManager"
             ><el-option
-              v-for="user in users"
+              v-for="user in assignees"
               :key="user.id"
               :label="user.displayName"
               :value="user.id" /></el-select></el-form-item
