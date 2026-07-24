@@ -1,0 +1,133 @@
+name: Deploy PMTool
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "执行操作"
+        required: true
+        default: deploy
+        type: choice
+        options: [deploy, rollback]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pmtool-production
+  cancel-in-progress: false
+
+env:
+  PMTOOL_ROOT: /opt/pmtool
+
+jobs:
+  build:
+    if: github.event_name == 'push' || inputs.operation == 'deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Test and package backend
+        working-directory: backend
+        run: mvn --batch-mode verify
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Test and build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test -- --run
+          npm run build
+
+      - name: Assemble release package
+        run: sh deploy/package-release.sh pmtool-release.tar.gz
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmtool-release
+          path: pmtool-release.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download release package
+        uses: actions/download-artifact@v4
+        with:
+          name: pmtool-release
+          path: package
+
+      - name: Prepare remote staging directory
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PMTOOL_SSH_HOST }}
+          port: ${{ secrets.PMTOOL_SSH_PORT }}
+          username: ${{ secrets.PMTOOL_SSH_USER }}
+          key: ${{ secrets.PMTOOL_SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.PMTOOL_SSH_FINGERPRINT }}
+          script_stop: true
+          script: mkdir -p /tmp/pmtool-release-${{ github.run_id }}
+
+      - name: Upload release package
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.PMTOOL_SSH_HOST }}
+          port: ${{ secrets.PMTOOL_SSH_PORT }}
+          username: ${{ secrets.PMTOOL_SSH_USER }}
+          key: ${{ secrets.PMTOOL_SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.PMTOOL_SSH_FINGERPRINT }}
+          source: package/pmtool-release.tar.gz
+          target: /tmp/pmtool-release-${{ github.run_id }}/
+          strip_components: 1
+
+      - name: Activate release and verify health
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PMTOOL_SSH_HOST }}
+          port: ${{ secrets.PMTOOL_SSH_PORT }}
+          username: ${{ secrets.PMTOOL_SSH_USER }}
+          key: ${{ secrets.PMTOOL_SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.PMTOOL_SSH_FINGERPRINT }}
+          script_stop: true
+          envs: PMTOOL_ROOT
+          script: |
+            set -eu
+            package_dir=/tmp/pmtool-release-${{ github.run_id }}
+            trap 'rm -rf "$package_dir"' EXIT
+            "$package_dir/deploy/release.sh" "$package_dir/pmtool-release.tar.gz" "${{ github.sha }}"
+
+  rollback:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'rollback'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Roll back to the previous verified release
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PMTOOL_SSH_HOST }}
+          port: ${{ secrets.PMTOOL_SSH_PORT }}
+          username: ${{ secrets.PMTOOL_SSH_USER }}
+          key: ${{ secrets.PMTOOL_SSH_PRIVATE_KEY }}
+          fingerprint: ${{ secrets.PMTOOL_SSH_FINGERPRINT }}
+          script_stop: true
+          envs: PMTOOL_ROOT
+          script: $PMTOOL_ROOT/deploy/rollback.sh

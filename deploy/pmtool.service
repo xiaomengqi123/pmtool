@@ -5,12 +5,11 @@ After=network.target
 [Service]
 Type=simple
 User=pmtool
-WorkingDirectory=/opt/pmtool/backend
+WorkingDirectory=/opt/pmtool/current/backend
 EnvironmentFile=/etc/pmtool/pmtool.env
-ExecStart=/usr/bin/java -jar /opt/pmtool/backend/pmtool.jar --spring.profiles.active=prod
+ExecStart=/usr/bin/java -jar /opt/pmtool/current/backend/pmtool.jar --spring.profiles.active=prod
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-
