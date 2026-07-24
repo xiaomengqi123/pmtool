@@ -166,6 +166,23 @@ describe("project permission entries", () => {
     expect(api.projectMembers).toHaveBeenCalledWith(1);
   });
 
+  it("does not expose another project manager's controls to a PM member", async () => {
+    useAuthStore().user = {
+      id: 2,
+      username: "pm-member",
+      displayName: "参与项目的经理",
+      roleCode: "PM",
+      departmentId: 0,
+      enabled: true,
+    };
+    const project = mount(ProjectView, { global: { stubs } });
+    const detail = mount(ProjectDetailView, { global: { stubs } });
+    await flushPromises();
+
+    expect((project.vm as any).canManageProject({ managerId: 1 })).toBe(false);
+    expect(buttons(detail, "推进")).toHaveLength(1);
+  });
+
   it("only allows a member to save their own task from the global task list", async () => {
     useAuthStore().user = {
       id: 2,
