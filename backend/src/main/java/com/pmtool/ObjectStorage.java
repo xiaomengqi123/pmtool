@@ -1,9 +1,6 @@
 package com.pmtool;
 
-import io.minio.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,19 +9,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-@Configuration
-class MinioConfig {
-    @Bean MinioClient minioClient(@Value("${pmtool.minio.endpoint}") String endpoint,@Value("${pmtool.minio.access-key}") String access,@Value("${pmtool.minio.secret-key}") String secret){return MinioClient.builder().endpoint(endpoint).credentials(access,secret).build();}
-}
 @Service
 class AttachmentService {
-    private final MinioClient minio; private final AttachmentRepository attachments; private final String bucket; private final PmToolService service;
-    AttachmentService(MinioClient minio,AttachmentRepository attachments,@Value("${pmtool.minio.bucket}")String bucket,PmToolService service){this.minio=minio;this.attachments=attachments;this.bucket=bucket;this.service=service;}
-    Attachment upload(String type,Long targetId,MultipartFile file){if(file.isEmpty()||file.getSize()>2*1024*1024)throw service.fail(40001,org.springframework.http.HttpStatus.BAD_REQUEST,"文件必须大于 0 且不超过 2 MB");try{if(!minio.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()))minio.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());String key=type+"/"+targetId+"/"+UUID.randomUUID(),originalName=Optional.ofNullable(file.getOriginalFilename()).filter(name->!name.isBlank()).orElse("file");minio.putObject(PutObjectArgs.builder().bucket(bucket).object(key).stream(file.getInputStream(),file.getSize(),-1).contentType(Optional.ofNullable(file.getContentType()).orElse("application/octet-stream")).build());Attachment a=new Attachment();a.targetType=type;a.targetId=targetId;a.originalName=originalName;a.objectKey=key;a.contentType=file.getContentType();a.sizeBytes=file.getSize();a.uploaderId=service.current().id();attachments.save(a);service.log("CREATE","ATTACHMENT",a.id,a.originalName);return a;}catch(Exception e){throw service.fail(50000,org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,"文件上传失败");}}
+    private final Path root; private final AttachmentRepository attachments; private final PmToolService service;
+    AttachmentService(@Value("${pmtool.storage.local-dir}") String localDir,AttachmentRepository attachments,PmToolService service){this.root=Path.of(localDir).toAbsolutePath().normalize();this.attachments=attachments;this.service=service;}
+    Attachment upload(String type,Long targetId,MultipartFile file){if(file.isEmpty()||file.getSize()>2*1024*1024)throw service.fail(40001,org.springframework.http.HttpStatus.BAD_REQUEST,"文件必须大于 0 且不超过 2 MB");try{String key=type+"/"+targetId+"/"+UUID.randomUUID(),originalName=Optional.ofNullable(file.getOriginalFilename()).filter(name->!name.isBlank()).orElse("file");Path target=objectPath(key);Files.createDirectories(target.getParent());try(InputStream input=file.getInputStream()){Files.copy(input,target,StandardCopyOption.REPLACE_EXISTING);}Attachment a=new Attachment();a.targetType=type;a.targetId=targetId;a.originalName=originalName;a.objectKey=key;a.contentType=file.getContentType();a.sizeBytes=file.getSize();a.uploaderId=service.current().id();attachments.save(a);service.log("CREATE","ATTACHMENT",a.id,a.originalName);return a;}catch(IOException|SecurityException e){throw service.fail(50000,org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,"文件上传失败");}}
     Attachment get(Long id){return attachments.findById(id).filter(a->!a.deleted).orElseThrow(()->service.fail(40400,org.springframework.http.HttpStatus.NOT_FOUND,"附件不存在"));}
-    InputStream stream(Attachment a){try{return minio.getObject(GetObjectArgs.builder().bucket(bucket).object(a.objectKey).build());}catch(Exception e){throw service.fail(40400,org.springframework.http.HttpStatus.NOT_FOUND,"对象存储文件不存在");}}
+    InputStream stream(Attachment a){try{return Files.newInputStream(objectPath(a.objectKey));}catch(IOException|SecurityException e){throw service.fail(40400,org.springframework.http.HttpStatus.NOT_FOUND,"附件文件不存在");}}
+    private Path objectPath(String key){Path target=root.resolve(key).normalize();if(!target.startsWith(root))throw service.fail(40001,org.springframework.http.HttpStatus.BAD_REQUEST,"附件路径无效");return target;}
 }
 @RestController @RequestMapping("/api/v1/attachments")
 class AttachmentController {

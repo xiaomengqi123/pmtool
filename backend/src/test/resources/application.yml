@@ -13,11 +13,8 @@ pmtool:
   jwt:
     secret: test-secret-key-must-be-at-least-thirty-two-characters-long
     expiry-minutes: 60
-  minio:
-    endpoint: http://localhost:9000
-    access-key: minioadmin
-    secret-key: minioadmin
-    bucket: pmtool-test
+  storage:
+    local-dir: ./target/test-uploads
   admin:
     username: test-admin
     password: test-password-123
