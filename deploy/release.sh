@@ -8,6 +8,7 @@ PACKAGE=${1:?"用法: release.sh <release-package.tar.gz> [release-id]"}
 RELEASE_ID=${2:-"$(date -u +%Y%m%d%H%M%S)"}
 PMTOOL_ROOT=${PMTOOL_ROOT:-/opt/pmtool}
 PMTOOL_USER=${PMTOOL_USER:-pmtool}
+PMTOOL_SERVICE=${PMTOOL_SERVICE:-pmtool}
 RELEASES_DIR="$PMTOOL_ROOT/releases"
 CURRENT_LINK="$PMTOOL_ROOT/current"
 PREVIOUS_LINK="$PMTOOL_ROOT/previous"
@@ -71,19 +72,19 @@ fi
 switch_link "$RELEASE_DIR"
 
 echo "正在重启 PMTool 服务：$RELEASE_ID"
-systemctl restart pmtool
+systemctl restart "$PMTOOL_SERVICE"
 
-if "$PMTOOL_ROOT/deploy/verify-deployment.sh"; then
+if PMTOOL_SERVICE="$PMTOOL_SERVICE" "$PMTOOL_ROOT/deploy/verify-deployment.sh"; then
   echo "PMTool 发布成功：$RELEASE_ID"
 else
   echo "新版本健康检查失败，开始恢复上一版本..." >&2
   if [ -n "$previous_target" ] && [ -d "$previous_target" ]; then
     switch_link "$previous_target"
-    systemctl restart pmtool
-    "$PMTOOL_ROOT/deploy/verify-deployment.sh" || true
+    systemctl restart "$PMTOOL_SERVICE"
+    PMTOOL_SERVICE="$PMTOOL_SERVICE" "$PMTOOL_ROOT/deploy/verify-deployment.sh" || true
     echo "已恢复到：$(basename "$previous_target")" >&2
   else
-    echo "没有可恢复的上一版本；请检查日志：journalctl -u pmtool -n 200" >&2
+    echo "没有可恢复的上一版本；请检查日志：journalctl -u $PMTOOL_SERVICE -n 200" >&2
   fi
   exit 1
 fi

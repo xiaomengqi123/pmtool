@@ -3,6 +3,7 @@ set -eu
 
 # 恢复 previous 软链接指向的上一版本；不回退数据库 Flyway 迁移。
 PMTOOL_ROOT=${PMTOOL_ROOT:-/opt/pmtool}
+PMTOOL_SERVICE=${PMTOOL_SERVICE:-pmtool}
 CURRENT_LINK="$PMTOOL_ROOT/current"
 PREVIOUS_LINK="$PMTOOL_ROOT/previous"
 
@@ -27,14 +28,14 @@ switch_link() {
 
 switch_link "$CURRENT_LINK" "$previous_target"
 switch_link "$PREVIOUS_LINK" "$current_target"
-systemctl restart pmtool
+systemctl restart "$PMTOOL_SERVICE"
 
-if "$PMTOOL_ROOT/deploy/verify-deployment.sh"; then
+if PMTOOL_SERVICE="$PMTOOL_SERVICE" "$PMTOOL_ROOT/deploy/verify-deployment.sh"; then
   echo "已回滚到：$(basename "$previous_target")"
 else
   echo "回滚后的健康检查失败，恢复原版本..." >&2
   switch_link "$CURRENT_LINK" "$current_target"
   switch_link "$PREVIOUS_LINK" "$previous_target"
-  systemctl restart pmtool
+  systemctl restart "$PMTOOL_SERVICE"
   exit 1
 fi
